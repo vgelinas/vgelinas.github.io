@@ -1,0 +1,2260 @@
+<!DOCTYPE html><html lang="en-us" >
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Vincent Gélinas">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="In this jupyter notebook we explore some personal Fitbit data. In this first part, we will walk through the data collection and data cleaning process.">
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://vgelinas.github.io/post/fitbit-data-exploration-part-i/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="hsl(339, 90%, 68%)">
+  
+
+  
+  
+  
+  <script src="/js/mathjax-config.js"></script>
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light" disabled>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark">
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" integrity="" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+  
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="https://vgelinas.github.io/post/fitbit-data-exploration-part-i/">
+
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="Vincent Gélinas">
+  <meta property="og:url" content="https://vgelinas.github.io/post/fitbit-data-exploration-part-i/">
+  <meta property="og:title" content="Fitbit Data Exploration Part I | Vincent Gélinas">
+  <meta property="og:description" content="In this jupyter notebook we explore some personal Fitbit data. In this first part, we will walk through the data collection and data cleaning process."><meta property="og:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
+  <meta property="twitter:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2020-05-18T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2020-05-18T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://vgelinas.github.io/post/fitbit-data-exploration-part-i/"
+  },
+  "headline": "Fitbit Data Exploration Part I",
+  
+  "datePublished": "2020-05-18T00:00:00Z",
+  "dateModified": "2020-05-18T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Vincent Gélinas"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Vincent Gélinas",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "In this jupyter notebook we explore some personal Fitbit data. In this first part, we will walk through the data collection and data cleaning process."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Fitbit Data Exploration Part I | Vincent Gélinas</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="dark">
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about"><span>About</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Fitbit Data Exploration Part I</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    May 18, 2020
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    14 min read
+  </span>
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      <p>In this project we will explore some Fitbit activity data pulled via 
+<a href="https://github.com/orcasgit/python-fitbit" target="_blank" rel="noopener">orcasgit&rsquo;s python-fitbit api</a>. We will go through the following steps:</p>
+<ol>
+<li>Data collection</li>
+<li>Data cleaning</li>
+<li>Data visualisation</li>
+</ol>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Python 3+</li>
+<li>The 
+<a href="https://pypi.org/project/fitbit/" target="_blank" rel="noopener">python-fitbit api</a></li>
+<li>The 
+<a href="https://pypi.org/project/ratelimit/" target="_blank" rel="noopener">ratelimit library</a></li>
+<li>The pandas, matplotlib, datetime standard libraries</li>
+</ul>
+<pre><code class="language-python">import fitbit
+import json
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from ratelimit import limits, sleep_and_retry
+
+%matplotlib inline
+</code></pre>
+<h2 id="1-data-collection">1. Data Collection</h2>
+<h3 id="11-authentication-setup">1.1. Authentication setup</h3>
+<p>To obtain personal data, we will use the python-fitbit API, a Python wrapper for the Fitbit API. This first requires you to 
+<a href="">set-up a Fitbit app</a>, and to collect the client_id and client_secret for this app. For this project I&rsquo;ve chosen to keep these in a credentials.json file stored in a dedicated subfolder named &lsquo;oauth&rsquo;.</p>
+<pre><code class="language-python">!cat oauth/credentials.json
+</code></pre>
+<pre><code>{&quot;client_id&quot;: &quot;YOUR_CLIENT_ID&quot;, &quot;client_secret&quot;: &quot;YOUR_CLIENT_SECRET&quot;}
+</code></pre>
+<p>In order to access the API, we will also need access tokens to authenticate. An access and refresh token can be obtained by following the official guide 
+<a href="">here</a>. Alternatively, one can obtain them directly by running the script &ldquo;gather_your_keys.py&rdquo; available at the python-fitbit 
+<a href="">github page</a>. Similarly, I chose to store these in a json file named &lsquo;tokens&rsquo;.</p>
+<pre><code class="language-python">!cat oauth/tokens.json
+</code></pre>
+<pre><code>{&quot;access_token&quot;: &quot;YOUR_ACCESS_TOKEN&quot;, &quot;expires_in&quot;: 28800, &quot;refresh_token&quot;: &quot;YOUR_REFRESH_TOKEN&quot;, &quot;scope&quot;: [&quot;profile&quot;, &quot;social&quot;, &quot;sleep&quot;, &quot;settings&quot;, &quot;location&quot;, &quot;heartrate&quot;, &quot;activity&quot;, &quot;nutrition&quot;, &quot;weight&quot;], &quot;token_type&quot;: &quot;Bearer&quot;, &quot;user_id&quot;: &quot;USER_ID&quot;, &quot;expires_at&quot;: 1589930317.083361}
+</code></pre>
+<p>The only important keys are &ldquo;access_token&rdquo; and &ldquo;refresh_token&rdquo; (the rest corresponds to optional arguments). Given our credentials and access/refresh tokens, we can instantiate a fitbit client which will handle API calls for us, using the tokens for authentication.</p>
+<p>The access_token is only good for 8 hours after first emitted. The way the API handles this is by giving you a refresh_token, which never deprecates, and can be used to obtain a new pair (access_token, refresh_token) of valid tokens after the access token expires. The client then needs to know where to store this pair (in our case, in tokens.json), and so we will pass it a token refresh method telling it how to do this.</p>
+<pre><code class="language-python"># load credentials
+with open(&quot;./oauth/credentials.json&quot;, &quot;r&quot;) as f:
+    credentials = json.load(f)
+
+# load tokens
+with open(&quot;./oauth/tokens.json&quot;, &quot;r&quot;) as f:  
+    tokens = json.load(f)  
+
+client_id = credentials['client_id'] 
+client_secret = credentials['client_secret']
+access_token = tokens['access_token']
+refresh_token = tokens['refresh_token']
+expires_at = tokens['expires_at'] 
+
+# token refresh method 
+def refresh_callback(token):   
+    &quot;&quot;&quot; Called when the OAuth token has been refreshed &quot;&quot;&quot; 
+    with open(&quot;./oauth/tokens.json&quot;, &quot;w&quot;) as f: 
+        json.dump(token, f)  
+
+# initialise client  
+client = fitbit.Fitbit(client_id=client_id, 
+                       client_secret=client_secret,
+                       access_token=access_token,
+                       refresh_token=refresh_token,
+                       refresh_cb=refresh_callback)
+</code></pre>
+<p>From there on, everytime the access token expires, new access and refresh tokens are issued and stored by the refresh_callback method, and we don&rsquo;t need to reauthorise.</p>
+<h3 id="12-a-first-look-at-the-response-data">1.2. A first look at the response data</h3>
+<p>The python-fitbit api supports the methods listed 
+<a href="https://python-fitbit.readthedocs.io/en/latest/#fitbit-api" target="_blank" rel="noopener">here</a>. We&rsquo;ll be interested in getting the activities data, as well as the intraday steps data which logs our minute-by-minute stepcount during the day.</p>
+<pre><code class="language-python"># Get activity data for one date, say May 1st
+date = '2020-05-01'
+activities_response = client.activities(date=date)
+
+# Look at the response object
+display(activities_response)
+print(&quot;The type of activities_response is: {}&quot;.format(type(activities_response)))
+</code></pre>
+<pre><code>{'activities': [{'activityId': 90013,
+   'activityParentId': 90013,
+   'activityParentName': 'Walk',
+   'calories': 302,
+   'description': 'Walking less than 2 mph, strolling very slowly',
+   'duration': 2714000,
+   'hasStartTime': True,
+   'isFavorite': False,
+   'lastModified': '2020-05-01T13:10:18.000Z',
+   'logId': 30758911349,
+   'name': 'Walk',
+   'startDate': '2020-05-01',
+   'startTime': '08:20',
+   'steps': 4000}],
+ 'goals': {'activeMinutes': 30,
+  'caloriesOut': 2745,
+  'distance': 5,
+  'steps': 12500},
+ 'summary': {'activeScore': -1,
+  'activityCalories': 1379,
+  'caloriesBMR': 1659,
+  'caloriesOut': 2826,
+  'distances': [{'activity': 'total', 'distance': 4.69},
+   {'activity': 'tracker', 'distance': 4.69},
+   {'activity': 'loggedActivities', 'distance': 0},
+   {'activity': 'veryActive', 'distance': 2.6},
+   {'activity': 'moderatelyActive', 'distance': 0.4},
+   {'activity': 'lightlyActive', 'distance': 1.68},
+   {'activity': 'sedentaryActive', 'distance': 0}],
+  'fairlyActiveMinutes': 25,
+  'heartRateZones': [{'caloriesOut': 1916.74877,
+    'max': 94,
+    'min': 30,
+    'minutes': 1255,
+    'name': 'Out of Range'},
+   {'caloriesOut': 775.70893,
+    'max': 132,
+    'min': 94,
+    'minutes': 137,
+    'name': 'Fat Burn'},
+   {'caloriesOut': 81.56868,
+    'max': 160,
+    'min': 132,
+    'minutes': 8,
+    'name': 'Cardio'},
+   {'caloriesOut': 0, 'max': 220, 'min': 160, 'minutes': 0, 'name': 'Peak'}],
+  'lightlyActiveMinutes': 210,
+  'marginalCalories': 828,
+  'restingHeartRate': 59,
+  'sedentaryMinutes': 578,
+  'steps': 9887,
+  'veryActiveMinutes': 49}}
+
+
+The type of activities_response is: &lt;class 'dict'&gt;
+</code></pre>
+<p>The dataset consists of nested dictionaries. We&rsquo;ll extract two datasets from the &lsquo;activities&rsquo; and &lsquo;summary&rsquo; keys.</p>
+<pre><code class="language-python"># Get activities dataset
+activities = activities_response['activities']
+activities = pd.DataFrame(activities)
+display(activities)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>activityId</th>
+      <th>activityParentId</th>
+      <th>activityParentName</th>
+      <th>calories</th>
+      <th>description</th>
+      <th>duration</th>
+      <th>hasStartTime</th>
+      <th>isFavorite</th>
+      <th>lastModified</th>
+      <th>logId</th>
+      <th>name</th>
+      <th>startDate</th>
+      <th>startTime</th>
+      <th>steps</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>90013</td>
+      <td>90013</td>
+      <td>Walk</td>
+      <td>302</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2714000</td>
+      <td>True</td>
+      <td>False</td>
+      <td>2020-05-01T13:10:18.000Z</td>
+      <td>30758911349</td>
+      <td>Walk</td>
+      <td>2020-05-01</td>
+      <td>08:20</td>
+      <td>4000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<pre><code class="language-python"># Get summary dataset
+summary = activities_response['summary']
+
+# Remove sub-dictionaries
+del summary['distances']
+del summary['heartRateZones']
+
+summary = pd.DataFrame(summary, index=[0])  # all values are scalars, must pass an index
+summary
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>activeScore</th>
+      <th>activityCalories</th>
+      <th>caloriesBMR</th>
+      <th>caloriesOut</th>
+      <th>fairlyActiveMinutes</th>
+      <th>lightlyActiveMinutes</th>
+      <th>marginalCalories</th>
+      <th>restingHeartRate</th>
+      <th>sedentaryMinutes</th>
+      <th>steps</th>
+      <th>veryActiveMinutes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-1</td>
+      <td>1379</td>
+      <td>1659</td>
+      <td>2826</td>
+      <td>25</td>
+      <td>210</td>
+      <td>828</td>
+      <td>59</td>
+      <td>578</td>
+      <td>9887</td>
+      <td>49</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Next, let&rsquo;s look at the intraday step data.</p>
+<pre><code class="language-python"># Get intraday steps data
+steps_response = client.intraday_time_series('activities/steps', base_date=date, detail_level=&quot;1min&quot;)
+
+# Extract dataset from response object
+steps = steps_response['activities-steps-intraday']['dataset']
+
+# Display dataset
+steps = pd.DataFrame(steps)
+display(steps)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>00:00:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>00:01:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>00:02:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>00:03:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>00:04:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>1435</th>
+      <td>23:55:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1436</th>
+      <td>23:56:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1437</th>
+      <td>23:57:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1438</th>
+      <td>23:58:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1439</th>
+      <td>23:59:00</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>1440 rows × 2 columns</p>
+</div>
+<p>We get the minute-by-minute count of steps on that day. Let&rsquo;s take a quick look at a plot.</p>
+<pre><code class="language-python">steps.plot()
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7ff4f1838670&gt;
+</code></pre>
+<p><img src="/img/notebook_17_1.png" alt="png"></p>
+<h3 id="13-collect-activity-and-intraday-steps-data-since-october-1st">1.3. Collect activity and intraday steps data since October 1st.</h3>
+<p>We can now iterate this, calling the fitbit API for each day since October 1st and collecting the result into three datasets. We saw that the python-fitbit api takes in dates formatted as &lsquo;YYYY-MM-DD&rsquo;; we can use the date_range method in pandas to produce a list of datetime objects, and then format the dates using the strftime method in datetime.</p>
+<p>Additionally, we have to remember that the Fitbit API has a rate limit of 150 API calls / hour, and so we will use the ratelimit library to restrict our collection rate.</p>
+<p>First, let&rsquo;s get a list of dates.</p>
+<pre><code class="language-python"># Get date range from October 1st to today
+start = pd.to_datetime(&quot;2019-10-01&quot;)
+date_range = pd.date_range(start=start, end=datetime.today() - timedelta(days=1))
+date_range = [datetime.strftime(date, &quot;%Y-%m-%d&quot;) for date in date_range]
+date_range[-5:]
+</code></pre>
+<pre><code>['2020-05-14', '2020-05-15', '2020-05-16', '2020-05-17', '2020-05-18']
+</code></pre>
+<p>Next, we call the API for each day in the list, timestamp the resulting datasets, then store the total datasets in csv files. We do this for each of the &lsquo;activities&rsquo;, &lsquo;summary&rsquo; and &lsquo;steps&rsquo; datasets.</p>
+<pre><code class="language-python"># We define a data collection function, and we use the ratelimit library
+# to limit our function to 150 API calls / hour.
+
+ONE_HOUR = 3600
+
+@sleep_and_retry
+@limits(calls=70, period=ONE_HOUR)
+def call_fitbit_api(date):
+    &quot;&quot;&quot; Call the Fitbit API for given date in format 'YYYY-MM-DD',
+        Return tuple (activities, summary, steps) dataframes &quot;&quot;&quot;
+    
+    # Call API twice to get activities and steps responses
+    activities_data = client.activities(date=date)
+    steps_data = client.intraday_time_series('activities/steps', base_date=date, detail_level='1min')
+        
+    # Get activities dataset
+    activities = activities_data['activities']
+    activities = pd.DataFrame(activities)
+    
+    # Get summary dataset
+    summary = activities_data['summary']
+    del summary['distances']
+    del summary['heartRateZones']
+    summary = pd.DataFrame(summary, index=[0])
+        
+    # Get steps intraday dataset  
+    steps = steps_data['activities-steps-intraday']['dataset']
+    steps = pd.DataFrame(steps)
+    
+    # Add a date column
+    activities['date'] = [date for i in activities.index]
+    summary['date'] = [date]
+    steps['date'] = [date for i in steps.index]
+    
+    return activities, summary, steps
+
+
+def get_fitbit_data(date_range):
+    &quot;&quot;&quot; Collect 'activities', 'summary' and 'steps' datasets over date range
+        Store as CSV files with format RESOURCE_DATE_to_DATE.csv &quot;&quot;&quot;
+    
+    daily_df = {
+        'activities': [],
+        'summary': [],
+        'steps': []
+    }
+
+    for date in date_range:
+        # Call API and get three datasets
+        activities, summary, steps = call_fitbit_api(date)
+    
+        # Append to previous datasets
+        daily_df['activities'].append(activities)
+        daily_df['summary'].append(summary)
+        daily_df['steps'].append(steps)
+        
+    # Store total dataset as file with format &quot;resource_DATE_to_DATE.csv&quot;
+    start, end = date_range[0], date_range[-1]
+
+    for resource in daily_df:
+        df = pd.concat(daily_df[resource], ignore_index=True)
+        df.to_csv(&quot;./data/raw/{}_{}_to_{}.csv&quot;.format(resource, start, end), index=False)
+</code></pre>
+<pre><code class="language-python"># Collect Fitbit 'activities', 'summary' and 'steps' data since October 1st, 2019
+get_fitbit_data(date_range=date_range)
+</code></pre>
+<h2 id="2-cleaning-the-data">2. Cleaning the data</h2>
+<h3 id="21-the-activity-dataset">2.1. The activity dataset</h3>
+<pre><code class="language-python">activities = pd.read_csv(&quot;./data/raw/activities_2019-10-01_to_2020-05-18.csv&quot;)
+display(activities.head(3))
+activities.shape
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>activityId</th>
+      <th>activityParentId</th>
+      <th>activityParentName</th>
+      <th>calories</th>
+      <th>description</th>
+      <th>duration</th>
+      <th>hasStartTime</th>
+      <th>isFavorite</th>
+      <th>lastModified</th>
+      <th>logId</th>
+      <th>name</th>
+      <th>startDate</th>
+      <th>startTime</th>
+      <th>steps</th>
+      <th>date</th>
+      <th>distance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>90013.0</td>
+      <td>90013.0</td>
+      <td>Walk</td>
+      <td>245.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>1843000.0</td>
+      <td>True</td>
+      <td>False</td>
+      <td>2019-10-01T15:36:45.000Z</td>
+      <td>2.568779e+10</td>
+      <td>Walk</td>
+      <td>2019-10-01</td>
+      <td>10:46</td>
+      <td>2059.0</td>
+      <td>2019-10-01</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>90013.0</td>
+      <td>90013.0</td>
+      <td>Walk</td>
+      <td>194.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>1792000.0</td>
+      <td>True</td>
+      <td>False</td>
+      <td>2019-10-01T17:44:08.000Z</td>
+      <td>2.569041e+10</td>
+      <td>Walk</td>
+      <td>2019-10-01</td>
+      <td>11:52</td>
+      <td>1977.0</td>
+      <td>2019-10-01</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>90013.0</td>
+      <td>90013.0</td>
+      <td>Walk</td>
+      <td>165.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>1485000.0</td>
+      <td>True</td>
+      <td>False</td>
+      <td>2019-10-02T02:00:43.000Z</td>
+      <td>2.570412e+10</td>
+      <td>Walk</td>
+      <td>2019-10-01</td>
+      <td>18:20</td>
+      <td>1443.0</td>
+      <td>2019-10-01</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<pre><code>(354, 16)
+</code></pre>
+<p>Some of the columns contain logging id information, True/False data or duplicate information which is not useful to us. Let&rsquo;s drop these.</p>
+<pre><code class="language-python">drop_columns = ['activityId', 'activityParentId', 'activityParentName', 'hasStartTime', 
+                'isFavorite', 'lastModified', 'logId', 'startDate']
+
+activities.drop(drop_columns, axis=1, inplace=True)
+</code></pre>
+<p>Next, let&rsquo;s look at the distance column. Consulting the documentation, we see that this means logged distance. Since I&rsquo;ve rarely used the feature, it looks like the column consists mostly of missing values.</p>
+<pre><code class="language-python">activities.distance.value_counts()
+</code></pre>
+<pre><code>0.310468    1
+0.773283    1
+Name: distance, dtype: int64
+</code></pre>
+<p>Since we only have 2 non-missing values in 354 rows, let&rsquo;s drop the column.</p>
+<pre><code class="language-python">activities.drop('distance', axis=1, inplace=True)
+</code></pre>
+<p>Some of the column names are in camelCase. Let&rsquo;s rename them to Python&rsquo;s favored snake_case.</p>
+<pre><code class="language-python">activities.rename(columns={'startTime': 'start_time'}, inplace=True)
+activities.head(3)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calories</th>
+      <th>description</th>
+      <th>duration</th>
+      <th>name</th>
+      <th>start_time</th>
+      <th>steps</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>245.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>1843000.0</td>
+      <td>Walk</td>
+      <td>10:46</td>
+      <td>2059.0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>194.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>1792000.0</td>
+      <td>Walk</td>
+      <td>11:52</td>
+      <td>1977.0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>165.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>1485000.0</td>
+      <td>Walk</td>
+      <td>18:20</td>
+      <td>1443.0</td>
+      <td>2019-10-01</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>The duration isn&rsquo;t immediately readable here. The Fitbit api 
+<a href="...">documentation</a> lists the duration as being in millisecond, so let&rsquo;s put it in minutes and rename accordingly.</p>
+<pre><code class="language-python">activities.duration = activities.duration.apply(lambda x: round(x/60000))
+activities.rename(columns={'duration': 'duration_min'}, inplace=True)
+
+activities.head(3)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calories</th>
+      <th>description</th>
+      <th>duration_min</th>
+      <th>name</th>
+      <th>start_time</th>
+      <th>steps</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>245.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>31</td>
+      <td>Walk</td>
+      <td>10:46</td>
+      <td>2059.0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>194.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>30</td>
+      <td>Walk</td>
+      <td>11:52</td>
+      <td>1977.0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>165.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>25</td>
+      <td>Walk</td>
+      <td>18:20</td>
+      <td>1443.0</td>
+      <td>2019-10-01</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>To help with analysis, let&rsquo;s format the start_time column as &ldquo;YYYY-MM-DD H:M:S&rdquo; to more easily convert to a datetime object. Since we have the activity duration, we can also add an end_time column.</p>
+<pre><code class="language-python"># Format start_time column and convert to datetime object
+activities.start_time = activities.date + &quot; &quot; + activities.start_time + &quot;:00&quot;
+activities.start_time = pd.to_datetime(activities.start_time)
+
+# Create end_time column by adding the duration_min column to start_time
+activities_duration = activities.duration_min.apply(lambda x: timedelta(minutes=x))
+activities['end_time'] = activities.start_time + activities_duration
+
+# Display result
+activities.head(3)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calories</th>
+      <th>description</th>
+      <th>duration_min</th>
+      <th>name</th>
+      <th>start_time</th>
+      <th>steps</th>
+      <th>date</th>
+      <th>end_time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>245.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>31</td>
+      <td>Walk</td>
+      <td>2019-10-01 10:46:00</td>
+      <td>2059.0</td>
+      <td>2019-10-01</td>
+      <td>2019-10-01 11:17:00</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>194.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>30</td>
+      <td>Walk</td>
+      <td>2019-10-01 11:52:00</td>
+      <td>1977.0</td>
+      <td>2019-10-01</td>
+      <td>2019-10-01 12:22:00</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>165.0</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>25</td>
+      <td>Walk</td>
+      <td>2019-10-01 18:20:00</td>
+      <td>1443.0</td>
+      <td>2019-10-01</td>
+      <td>2019-10-01 18:45:00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Finally, let&rsquo;s reorder the columns for readability.</p>
+<pre><code class="language-python"># Reorder columns
+column_order = ['date', 'name', 'description', 'start_time', 'end_time', 'duration_min', 'steps', 'calories']
+activities = activities[column_order]
+
+# Store dataset
+start, end = activities.date[0], activities.date[len(activities.index)-1]
+activities.to_csv(&quot;./data/tidy/activities_{}_to_{}.csv&quot;.format(start, end), index=False)
+
+# Look at end result
+activities
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>name</th>
+      <th>description</th>
+      <th>start_time</th>
+      <th>end_time</th>
+      <th>duration_min</th>
+      <th>steps</th>
+      <th>calories</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 10:46:00</td>
+      <td>2019-10-01 11:17:00</td>
+      <td>31</td>
+      <td>2059.0</td>
+      <td>245.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 11:52:00</td>
+      <td>2019-10-01 12:22:00</td>
+      <td>30</td>
+      <td>1977.0</td>
+      <td>194.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 18:20:00</td>
+      <td>2019-10-01 18:45:00</td>
+      <td>25</td>
+      <td>1443.0</td>
+      <td>165.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 19:38:00</td>
+      <td>2019-10-01 20:05:00</td>
+      <td>27</td>
+      <td>1624.0</td>
+      <td>176.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2019-10-02</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-02 13:38:00</td>
+      <td>2019-10-02 15:20:00</td>
+      <td>102</td>
+      <td>7035.0</td>
+      <td>552.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>349</th>
+      <td>2020-05-14</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2020-05-14 08:22:00</td>
+      <td>2020-05-14 09:07:00</td>
+      <td>45</td>
+      <td>4394.0</td>
+      <td>361.0</td>
+    </tr>
+    <tr>
+      <th>350</th>
+      <td>2020-05-15</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2020-05-15 12:23:00</td>
+      <td>2020-05-15 13:59:00</td>
+      <td>96</td>
+      <td>9430.0</td>
+      <td>658.0</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>2020-05-15</td>
+      <td>Run</td>
+      <td>Running - 5 mph (12 min/mile)</td>
+      <td>2020-05-15 20:13:00</td>
+      <td>2020-05-15 20:34:00</td>
+      <td>21</td>
+      <td>2865.0</td>
+      <td>245.0</td>
+    </tr>
+    <tr>
+      <th>352</th>
+      <td>2020-05-16</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2020-05-16 10:29:00</td>
+      <td>2020-05-16 12:33:00</td>
+      <td>124</td>
+      <td>10487.0</td>
+      <td>855.0</td>
+    </tr>
+    <tr>
+      <th>353</th>
+      <td>2020-05-17</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2020-05-17 11:11:00</td>
+      <td>2020-05-17 13:15:00</td>
+      <td>124</td>
+      <td>10757.0</td>
+      <td>835.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>354 rows × 8 columns</p>
+</div>
+<h3 id="22-the-summary-dataset">2.2. The summary dataset</h3>
+<pre><code class="language-python">summary = pd.read_csv(&quot;./data/raw/summary_2019-10-01_to_2020-05-18.csv&quot;)
+summary
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>activeScore</th>
+      <th>activityCalories</th>
+      <th>caloriesBMR</th>
+      <th>caloriesOut</th>
+      <th>fairlyActiveMinutes</th>
+      <th>lightlyActiveMinutes</th>
+      <th>marginalCalories</th>
+      <th>restingHeartRate</th>
+      <th>sedentaryMinutes</th>
+      <th>steps</th>
+      <th>veryActiveMinutes</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-1</td>
+      <td>4097</td>
+      <td>1663</td>
+      <td>5018</td>
+      <td>165</td>
+      <td>420</td>
+      <td>2670</td>
+      <td>58</td>
+      <td>209</td>
+      <td>25576</td>
+      <td>152</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-1</td>
+      <td>1967</td>
+      <td>1663</td>
+      <td>3211</td>
+      <td>27</td>
+      <td>360</td>
+      <td>1145</td>
+      <td>58</td>
+      <td>379</td>
+      <td>16471</td>
+      <td>40</td>
+      <td>2019-10-02</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1</td>
+      <td>1540</td>
+      <td>1663</td>
+      <td>2923</td>
+      <td>22</td>
+      <td>251</td>
+      <td>920</td>
+      <td>57</td>
+      <td>674</td>
+      <td>13510</td>
+      <td>50</td>
+      <td>2019-10-03</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-1</td>
+      <td>1470</td>
+      <td>1663</td>
+      <td>2883</td>
+      <td>44</td>
+      <td>163</td>
+      <td>940</td>
+      <td>56</td>
+      <td>659</td>
+      <td>11443</td>
+      <td>65</td>
+      <td>2019-10-04</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-1</td>
+      <td>1776</td>
+      <td>1663</td>
+      <td>3136</td>
+      <td>35</td>
+      <td>178</td>
+      <td>1110</td>
+      <td>56</td>
+      <td>572</td>
+      <td>18711</td>
+      <td>120</td>
+      <td>2019-10-05</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>226</th>
+      <td>-1</td>
+      <td>1179</td>
+      <td>1659</td>
+      <td>2614</td>
+      <td>8</td>
+      <td>218</td>
+      <td>680</td>
+      <td>57</td>
+      <td>636</td>
+      <td>8938</td>
+      <td>40</td>
+      <td>2020-05-14</td>
+    </tr>
+    <tr>
+      <th>227</th>
+      <td>-1</td>
+      <td>1589</td>
+      <td>1659</td>
+      <td>2988</td>
+      <td>19</td>
+      <td>183</td>
+      <td>1011</td>
+      <td>56</td>
+      <td>565</td>
+      <td>15358</td>
+      <td>99</td>
+      <td>2020-05-15</td>
+    </tr>
+    <tr>
+      <th>228</th>
+      <td>-1</td>
+      <td>1512</td>
+      <td>1659</td>
+      <td>2903</td>
+      <td>44</td>
+      <td>160</td>
+      <td>959</td>
+      <td>55</td>
+      <td>614</td>
+      <td>15115</td>
+      <td>82</td>
+      <td>2020-05-16</td>
+    </tr>
+    <tr>
+      <th>229</th>
+      <td>-1</td>
+      <td>1922</td>
+      <td>1659</td>
+      <td>3230</td>
+      <td>40</td>
+      <td>224</td>
+      <td>1215</td>
+      <td>55</td>
+      <td>399</td>
+      <td>18880</td>
+      <td>100</td>
+      <td>2020-05-17</td>
+    </tr>
+    <tr>
+      <th>230</th>
+      <td>-1</td>
+      <td>468</td>
+      <td>1659</td>
+      <td>2046</td>
+      <td>8</td>
+      <td>116</td>
+      <td>235</td>
+      <td>54</td>
+      <td>713</td>
+      <td>2341</td>
+      <td>0</td>
+      <td>2020-05-18</td>
+    </tr>
+  </tbody>
+</table>
+<p>231 rows × 12 columns</p>
+</div>
+<p>The activeScore columns is added by the python-fitbit wrapper to the Fitbit API. All values are -1 in our dataset so there&rsquo;s not much loss of information in dropping the column (maybe figure this out a bit better).</p>
+<pre><code class="language-python">(summary.activeScore == -1).all()
+</code></pre>
+<pre><code>True
+</code></pre>
+<pre><code class="language-python">summary.drop('activeScore', axis=1, inplace=True)
+summary.head(2)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>activityCalories</th>
+      <th>caloriesBMR</th>
+      <th>caloriesOut</th>
+      <th>fairlyActiveMinutes</th>
+      <th>lightlyActiveMinutes</th>
+      <th>marginalCalories</th>
+      <th>restingHeartRate</th>
+      <th>sedentaryMinutes</th>
+      <th>steps</th>
+      <th>veryActiveMinutes</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4097</td>
+      <td>1663</td>
+      <td>5018</td>
+      <td>165</td>
+      <td>420</td>
+      <td>2670</td>
+      <td>58</td>
+      <td>209</td>
+      <td>25576</td>
+      <td>152</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1967</td>
+      <td>1663</td>
+      <td>3211</td>
+      <td>27</td>
+      <td>360</td>
+      <td>1145</td>
+      <td>58</td>
+      <td>379</td>
+      <td>16471</td>
+      <td>40</td>
+      <td>2019-10-02</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Next, we again format all columns to snake_case and reorder for readability.</p>
+<pre><code class="language-python"># Rename columns to snake_case
+columns_map = {
+    'activityCalories': 'activity_calories',
+    'caloriesBMR': 'calories_BMR',
+    'caloriesOut': 'calories_out',
+    'fairlyActiveMinutes': 'fairly_active_minutes',
+    'lightlyActiveMinutes': 'lightly_active_minutes',
+    'marginalCalories': 'marginal_calories',
+    'restingHeartRate': 'resting_heart_rate',
+    'sedentaryMinutes': 'sedentary_minutes',
+    'veryActiveMinutes': 'very_active_minutes'
+}
+
+summary.rename(columns=columns_map, inplace=True)
+
+# Reorder columns
+column_order = ['date', 'steps', 'very_active_minutes', 'fairly_active_minutes', 'lightly_active_minutes', 
+                'sedentary_minutes', 'activity_calories', 'marginal_calories', 'calories_out', 'calories_BMR',
+                'resting_heart_rate']
+
+summary = summary[column_order]
+
+# Store dataset
+start, end = summary.date[0], summary.date[len(summary.index)-1]
+summary.to_csv(&quot;./data/tidy/summary_{}_to_{}.csv&quot;.format(start, end), index=False)
+
+# Look at result
+summary.head(3)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>steps</th>
+      <th>very_active_minutes</th>
+      <th>fairly_active_minutes</th>
+      <th>lightly_active_minutes</th>
+      <th>sedentary_minutes</th>
+      <th>activity_calories</th>
+      <th>marginal_calories</th>
+      <th>calories_out</th>
+      <th>calories_BMR</th>
+      <th>resting_heart_rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01</td>
+      <td>25576</td>
+      <td>152</td>
+      <td>165</td>
+      <td>420</td>
+      <td>209</td>
+      <td>4097</td>
+      <td>2670</td>
+      <td>5018</td>
+      <td>1663</td>
+      <td>58</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-02</td>
+      <td>16471</td>
+      <td>40</td>
+      <td>27</td>
+      <td>360</td>
+      <td>379</td>
+      <td>1967</td>
+      <td>1145</td>
+      <td>3211</td>
+      <td>1663</td>
+      <td>58</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-03</td>
+      <td>13510</td>
+      <td>50</td>
+      <td>22</td>
+      <td>251</td>
+      <td>674</td>
+      <td>1540</td>
+      <td>920</td>
+      <td>2923</td>
+      <td>1663</td>
+      <td>57</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<h3 id="23-the-steps-dataset">2.3. The steps dataset</h3>
+<p>Finally, we look at the intraday steps dataset.</p>
+<pre><code class="language-python">steps = pd.read_csv(&quot;./data/raw/steps_2019-10-01_to_2020-05-18.csv&quot;)
+steps
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>value</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>00:00:00</td>
+      <td>0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>00:01:00</td>
+      <td>0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>00:02:00</td>
+      <td>0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>00:03:00</td>
+      <td>0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>00:04:00</td>
+      <td>0</td>
+      <td>2019-10-01</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>332635</th>
+      <td>23:55:00</td>
+      <td>0</td>
+      <td>2020-05-18</td>
+    </tr>
+    <tr>
+      <th>332636</th>
+      <td>23:56:00</td>
+      <td>0</td>
+      <td>2020-05-18</td>
+    </tr>
+    <tr>
+      <th>332637</th>
+      <td>23:57:00</td>
+      <td>0</td>
+      <td>2020-05-18</td>
+    </tr>
+    <tr>
+      <th>332638</th>
+      <td>23:58:00</td>
+      <td>0</td>
+      <td>2020-05-18</td>
+    </tr>
+    <tr>
+      <th>332639</th>
+      <td>23:59:00</td>
+      <td>0</td>
+      <td>2020-05-18</td>
+    </tr>
+  </tbody>
+</table>
+<p>332640 rows × 3 columns</p>
+</div>
+<p>We can combine the time and date into a single column, in datetime format. We also rename value to the more descriptive &lsquo;stepcount&rsquo;.</p>
+<pre><code class="language-python"># Combine date and time
+steps.time = steps.date + &quot; &quot; + steps.time
+
+# Rename value to stepcount
+steps.rename(columns={'value': 'stepcount'}, inplace=True)
+
+# Get endpoint dates to store the file
+start, end = steps.date[0], steps.date[len(steps.index) - 1]
+
+# Drop date column and store
+steps.drop('date', axis=1, inplace=True)
+steps.to_csv(&quot;./data/tidy/steps_{}_to_{}.csv&quot;.format(start, end), index=False)
+
+# Look at end result
+steps
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>stepcount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01 00:00:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-01 00:01:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-01 00:02:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2019-10-01 00:03:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2019-10-01 00:04:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>332635</th>
+      <td>2020-05-18 23:55:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332636</th>
+      <td>2020-05-18 23:56:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332637</th>
+      <td>2020-05-18 23:57:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332638</th>
+      <td>2020-05-18 23:58:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332639</th>
+      <td>2020-05-18 23:59:00</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>332640 rows × 2 columns</p>
+</div>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  </div>
+</article>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = true;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    
+  </p>
+
+  
+  
+
+
+
+
+
+
+  <p class="powered-by">
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

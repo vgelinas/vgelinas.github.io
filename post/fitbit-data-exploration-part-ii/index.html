@@ -1,0 +1,1718 @@
+<!DOCTYPE html><html lang="en-us" >
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Vincent Gélinas">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="The second part of the Fitbit data exploration project, where we explore some visualisations of the data obtained in part I.">
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="hsl(339, 90%, 68%)">
+  
+
+  
+  
+  
+  <script src="/js/mathjax-config.js"></script>
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light" disabled>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark">
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" integrity="" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+  
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/">
+
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="Vincent Gélinas">
+  <meta property="og:url" content="https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/">
+  <meta property="og:title" content="Fitbit Data Exploration Part II | Vincent Gélinas">
+  <meta property="og:description" content="The second part of the Fitbit data exploration project, where we explore some visualisations of the data obtained in part I."><meta property="og:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
+  <meta property="twitter:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2020-05-18T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2020-05-18T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/"
+  },
+  "headline": "Fitbit Data Exploration Part II",
+  
+  "datePublished": "2020-05-18T00:00:00Z",
+  "dateModified": "2020-05-18T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Vincent Gélinas"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Vincent Gélinas",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "The second part of the Fitbit data exploration project, where we explore some visualisations of the data obtained in part I."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Fitbit Data Exploration Part II | Vincent Gélinas</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="dark">
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about"><span>About</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Fitbit Data Exploration Part II</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    May 18, 2020
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    8 min read
+  </span>
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      <p>In Part I we showed how to connect to the Fitbit API via Python, and we built some datasets consisting of activities and intraday steps data from October to today. In this post we walk through some data visualisations, and will take a look in particular at the intraday steps data.</p>
+<h2 id="3-visualisations">3. Visualisations</h2>
+<h3 id="31-activity-statistics-per-week-day">3.1. Activity statistics per week day</h3>
+<p>Let&rsquo;s compile some statistics based on day of the week.</p>
+<pre><code class="language-python">summary = pd.read_csv(&quot;./data/tidy/summary_2019-10-01_to_2020-05-18.csv&quot;)
+
+# convert date to datetime format
+summary.date = pd.to_datetime(summary.date)
+
+summary
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>steps</th>
+      <th>very_active_minutes</th>
+      <th>fairly_active_minutes</th>
+      <th>lightly_active_minutes</th>
+      <th>sedentary_minutes</th>
+      <th>activity_calories</th>
+      <th>marginal_calories</th>
+      <th>calories_out</th>
+      <th>calories_BMR</th>
+      <th>resting_heart_rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01</td>
+      <td>25576</td>
+      <td>152</td>
+      <td>165</td>
+      <td>420</td>
+      <td>209</td>
+      <td>4097</td>
+      <td>2670</td>
+      <td>5018</td>
+      <td>1663</td>
+      <td>58</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-02</td>
+      <td>16471</td>
+      <td>40</td>
+      <td>27</td>
+      <td>360</td>
+      <td>379</td>
+      <td>1967</td>
+      <td>1145</td>
+      <td>3211</td>
+      <td>1663</td>
+      <td>58</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-03</td>
+      <td>13510</td>
+      <td>50</td>
+      <td>22</td>
+      <td>251</td>
+      <td>674</td>
+      <td>1540</td>
+      <td>920</td>
+      <td>2923</td>
+      <td>1663</td>
+      <td>57</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2019-10-04</td>
+      <td>11443</td>
+      <td>65</td>
+      <td>44</td>
+      <td>163</td>
+      <td>659</td>
+      <td>1470</td>
+      <td>940</td>
+      <td>2883</td>
+      <td>1663</td>
+      <td>56</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2019-10-05</td>
+      <td>18711</td>
+      <td>120</td>
+      <td>35</td>
+      <td>178</td>
+      <td>572</td>
+      <td>1776</td>
+      <td>1110</td>
+      <td>3136</td>
+      <td>1663</td>
+      <td>56</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>226</th>
+      <td>2020-05-14</td>
+      <td>8938</td>
+      <td>40</td>
+      <td>8</td>
+      <td>218</td>
+      <td>636</td>
+      <td>1179</td>
+      <td>680</td>
+      <td>2614</td>
+      <td>1659</td>
+      <td>57</td>
+    </tr>
+    <tr>
+      <th>227</th>
+      <td>2020-05-15</td>
+      <td>15358</td>
+      <td>99</td>
+      <td>19</td>
+      <td>183</td>
+      <td>565</td>
+      <td>1589</td>
+      <td>1011</td>
+      <td>2988</td>
+      <td>1659</td>
+      <td>56</td>
+    </tr>
+    <tr>
+      <th>228</th>
+      <td>2020-05-16</td>
+      <td>15115</td>
+      <td>82</td>
+      <td>44</td>
+      <td>160</td>
+      <td>614</td>
+      <td>1512</td>
+      <td>959</td>
+      <td>2903</td>
+      <td>1659</td>
+      <td>55</td>
+    </tr>
+    <tr>
+      <th>229</th>
+      <td>2020-05-17</td>
+      <td>18880</td>
+      <td>100</td>
+      <td>40</td>
+      <td>224</td>
+      <td>399</td>
+      <td>1922</td>
+      <td>1215</td>
+      <td>3230</td>
+      <td>1659</td>
+      <td>55</td>
+    </tr>
+    <tr>
+      <th>230</th>
+      <td>2020-05-18</td>
+      <td>2341</td>
+      <td>0</td>
+      <td>8</td>
+      <td>116</td>
+      <td>713</td>
+      <td>468</td>
+      <td>235</td>
+      <td>2046</td>
+      <td>1659</td>
+      <td>54</td>
+    </tr>
+  </tbody>
+</table>
+<p>231 rows × 11 columns</p>
+</div>
+<p>We can use strftime to convert the date to a week day, and get group statistics per day of the week.</p>
+<pre><code class="language-python"># Add a weekday column
+summary['weekday'] = summary.date.apply(lambda x: datetime.strftime(x, &quot;%A&quot;))
+
+# Get statistics per day of the week
+weekly_statistics = summary.groupby('weekday').describe()
+
+# Row indices are days of the week, put them in order
+row_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+weekly_statistics = weekly_statistics.loc[row_order, :]
+
+# Show results
+weekly_statistics
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead tr th {
+    text-align: left;
+}
+
+.dataframe thead tr:last-of-type th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th colspan="8" halign="left">steps</th>
+      <th colspan="2" halign="left">very_active_minutes</th>
+      <th>...</th>
+      <th colspan="2" halign="left">calories_BMR</th>
+      <th colspan="8" halign="left">resting_heart_rate</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th>count</th>
+      <th>mean</th>
+      <th>std</th>
+      <th>min</th>
+      <th>25%</th>
+      <th>50%</th>
+      <th>75%</th>
+      <th>max</th>
+      <th>count</th>
+      <th>mean</th>
+      <th>...</th>
+      <th>75%</th>
+      <th>max</th>
+      <th>count</th>
+      <th>mean</th>
+      <th>std</th>
+      <th>min</th>
+      <th>25%</th>
+      <th>50%</th>
+      <th>75%</th>
+      <th>max</th>
+    </tr>
+    <tr>
+      <th>weekday</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Monday</th>
+      <td>33.0</td>
+      <td>10817.393939</td>
+      <td>4075.727205</td>
+      <td>2341.0</td>
+      <td>7793.0</td>
+      <td>11663.0</td>
+      <td>13248.0</td>
+      <td>17668.0</td>
+      <td>33.0</td>
+      <td>50.848485</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.030303</td>
+      <td>1.610218</td>
+      <td>53.0</td>
+      <td>54.0</td>
+      <td>55.0</td>
+      <td>56.0</td>
+      <td>59.0</td>
+    </tr>
+    <tr>
+      <th>Tuesday</th>
+      <td>33.0</td>
+      <td>11202.878788</td>
+      <td>4575.416680</td>
+      <td>3250.0</td>
+      <td>8211.0</td>
+      <td>10953.0</td>
+      <td>12994.0</td>
+      <td>25576.0</td>
+      <td>33.0</td>
+      <td>57.666667</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.030303</td>
+      <td>1.878910</td>
+      <td>52.0</td>
+      <td>53.0</td>
+      <td>55.0</td>
+      <td>56.0</td>
+      <td>59.0</td>
+    </tr>
+    <tr>
+      <th>Wednesday</th>
+      <td>33.0</td>
+      <td>11007.939394</td>
+      <td>3307.219952</td>
+      <td>4486.0</td>
+      <td>9083.0</td>
+      <td>10795.0</td>
+      <td>13538.0</td>
+      <td>18402.0</td>
+      <td>33.0</td>
+      <td>53.909091</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.303030</td>
+      <td>1.704495</td>
+      <td>52.0</td>
+      <td>54.0</td>
+      <td>55.0</td>
+      <td>56.0</td>
+      <td>58.0</td>
+    </tr>
+    <tr>
+      <th>Thursday</th>
+      <td>33.0</td>
+      <td>10867.212121</td>
+      <td>2882.811852</td>
+      <td>4525.0</td>
+      <td>8938.0</td>
+      <td>10856.0</td>
+      <td>13064.0</td>
+      <td>16621.0</td>
+      <td>33.0</td>
+      <td>54.212121</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.424242</td>
+      <td>1.581738</td>
+      <td>52.0</td>
+      <td>54.0</td>
+      <td>56.0</td>
+      <td>56.0</td>
+      <td>59.0</td>
+    </tr>
+    <tr>
+      <th>Friday</th>
+      <td>33.0</td>
+      <td>12526.757576</td>
+      <td>4179.309722</td>
+      <td>2028.0</td>
+      <td>9887.0</td>
+      <td>12445.0</td>
+      <td>15358.0</td>
+      <td>18958.0</td>
+      <td>33.0</td>
+      <td>66.454545</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.424242</td>
+      <td>1.581738</td>
+      <td>52.0</td>
+      <td>54.0</td>
+      <td>56.0</td>
+      <td>56.0</td>
+      <td>59.0</td>
+    </tr>
+    <tr>
+      <th>Saturday</th>
+      <td>33.0</td>
+      <td>14507.181818</td>
+      <td>4188.612206</td>
+      <td>6315.0</td>
+      <td>12446.0</td>
+      <td>15049.0</td>
+      <td>16924.0</td>
+      <td>23152.0</td>
+      <td>33.0</td>
+      <td>74.151515</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.575758</td>
+      <td>1.581738</td>
+      <td>53.0</td>
+      <td>55.0</td>
+      <td>55.0</td>
+      <td>56.0</td>
+      <td>60.0</td>
+    </tr>
+    <tr>
+      <th>Sunday</th>
+      <td>33.0</td>
+      <td>12488.121212</td>
+      <td>4849.136191</td>
+      <td>4560.0</td>
+      <td>9659.0</td>
+      <td>11756.0</td>
+      <td>15944.0</td>
+      <td>25193.0</td>
+      <td>33.0</td>
+      <td>64.636364</td>
+      <td>...</td>
+      <td>1663.0</td>
+      <td>1663.0</td>
+      <td>33.0</td>
+      <td>55.393939</td>
+      <td>1.456438</td>
+      <td>53.0</td>
+      <td>54.0</td>
+      <td>55.0</td>
+      <td>56.0</td>
+      <td>59.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>7 rows × 80 columns</p>
+</div>
+<pre><code class="language-python"># Plot the mean and first quartile for number of steps per weekday
+mean_steps = weekly_statistics.steps[['mean', '25%']]
+mean_steps.plot(kind='bar')
+
+plt.title('Weekly stepcount since October 1st, 2019')
+plt.ylabel('steps')
+plt.ylim([0, 18000])
+plt.show()
+</code></pre>
+<p><img src="/img/notebook_57_0.png" alt="png"></p>
+<h3 id="32-visualising-walks-over-the-day">3.2. Visualising walks over the day</h3>
+<pre><code class="language-python"># Load in dataset
+steps = pd.read_csv(&quot;./data/tidy/steps_2019-10-01_to_2020-05-18.csv&quot;)
+display(steps)
+
+# Convert time to datetime object for analysis
+steps.time = pd.to_datetime(steps.time)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>stepcount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01 00:00:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-01 00:01:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-01 00:02:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2019-10-01 00:03:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2019-10-01 00:04:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>332635</th>
+      <td>2020-05-18 23:55:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332636</th>
+      <td>2020-05-18 23:56:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332637</th>
+      <td>2020-05-18 23:57:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332638</th>
+      <td>2020-05-18 23:58:00</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>332639</th>
+      <td>2020-05-18 23:59:00</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>332640 rows × 2 columns</p>
+</div>
+<p>Let&rsquo;s visualise steps intraday data over a given day.</p>
+<pre><code class="language-python">date = '2020-05-01'
+
+# Restrict to logs for given date
+day_df = steps[steps.time.apply(lambda x: datetime.strftime(x, &quot;%Y-%m-%d&quot;)) == date].copy()  # deep copy
+
+# Restrict to within waking hours
+start_of_day = pd.to_datetime('2020-05-01 07:00:00')
+end_of_day = pd.to_datetime('2020-05-01 23:00:00')
+day_df = day_df[(day_df.time &gt;= start_of_day)&amp;(day_df.time &lt;= end_of_day)]
+
+# Convert time back to hr:min:sec format and set as index
+day_df.time = day_df.time.apply(lambda x: datetime.strftime(x, &quot;%H:%M:%S&quot;))
+day_df.set_index('time', inplace=True)
+</code></pre>
+<pre><code class="language-python"># Plot steps on May 1st
+fig, ax = plt.subplots()
+
+day_df.rolling(15).mean().plot(ax=ax)  # 15 min rolling avg to smooth out noise
+ax.set_title('Steps on May 1st, 2020')
+ax.set_xlabel('Time of Day')
+ax.set_ylabel('Steps per min')
+
+plt.show()
+</code></pre>
+<p><img src="/img/notebook_62_0.png" alt="png"></p>
+<p>Let&rsquo;s isolate the steps that result from walks and not from general activity. The activity dataset has timestamps for each activity (walk, run, &hellip;) and we may use these to filter our dataset. Let&rsquo;s add a column named &lsquo;on_walk&rsquo; to the steps dataset, with a True/False value.</p>
+<pre><code class="language-python"># Load activities dataset
+activities = pd.read_csv(&quot;./data/tidy/activities_2019-10-01_to_2020-05-17.csv&quot;)
+display(activities.head(3))
+
+# Convert time columns to datetime objects for analysis
+activities.start_time = pd.to_datetime(activities.start_time)
+activities.end_time = pd.to_datetime(activities.end_time)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>name</th>
+      <th>description</th>
+      <th>start_time</th>
+      <th>end_time</th>
+      <th>duration_min</th>
+      <th>steps</th>
+      <th>calories</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 10:46:00</td>
+      <td>2019-10-01 11:17:00</td>
+      <td>31</td>
+      <td>2059.0</td>
+      <td>245.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 11:52:00</td>
+      <td>2019-10-01 12:22:00</td>
+      <td>30</td>
+      <td>1977.0</td>
+      <td>194.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-01</td>
+      <td>Walk</td>
+      <td>Walking less than 2 mph, strolling very slowly</td>
+      <td>2019-10-01 18:20:00</td>
+      <td>2019-10-01 18:45:00</td>
+      <td>25</td>
+      <td>1443.0</td>
+      <td>165.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<pre><code class="language-python"># Helper function to filter the intraday steps data by activity type
+def is_during_activity(t, activity):
+    &quot;&quot;&quot; Takes a datetime object t and activity name
+        Returns True if during activity, else False &quot;&quot;&quot;
+    # Get the activities dataset for that day
+    date = datetime.strftime(t, &quot;%Y-%m-%d&quot;)
+    df = activities[activities.date == date]
+    
+    # Subset to rows which represent activity
+    df = df[df.name == activity]
+    
+    # Check if t is within the bounds of the activity
+    for i in df.index:
+        if df.loc[i, 'start_time'] &lt;= t &lt;= df.loc[i, 'end_time']:
+            return True
+    
+    return False
+
+
+# Add 'on_walk' column to steps dataframe
+steps['on_walk'] = steps.time.apply(is_during_activity, args=('Walk',))
+</code></pre>
+<pre><code class="language-python">steps
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>stepcount</th>
+      <th>on_walk</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01 00:00:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-01 00:01:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-01 00:02:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2019-10-01 00:03:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2019-10-01 00:04:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>332635</th>
+      <td>2020-05-18 23:55:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>332636</th>
+      <td>2020-05-18 23:56:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>332637</th>
+      <td>2020-05-18 23:57:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>332638</th>
+      <td>2020-05-18 23:58:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>332639</th>
+      <td>2020-05-18 23:59:00</td>
+      <td>0</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+<p>332640 rows × 3 columns</p>
+</div>
+<p>Let&rsquo;s create a new dataframe consisting of walks intraday steps data.</p>
+<pre><code class="language-python"># Remove all steps which are not during a walk
+walks = steps.copy()
+walks.stepcount = walks.stepcount.where(walks.on_walk == True, 0)
+    
+# Drop 'on_walk' column
+walks.drop('on_walk', axis=1, inplace=True)
+</code></pre>
+<p>Let&rsquo;s look at May 1st again.</p>
+<pre><code class="language-python">date = '2020-05-01'
+
+# Restrict to logs for given date
+day_walks = walks[walks.time.apply(lambda x: datetime.strftime(x, &quot;%Y-%m-%d&quot;)) == date].copy()
+
+# Restrict to within waking hours
+start_of_day = pd.to_datetime('2020-05-01 07:00:00')
+end_of_day = pd.to_datetime('2020-05-01 23:00:00')
+day_walks = day_walks[(day_walks.time &gt;= start_of_day)&amp;(day_walks.time &lt;= end_of_day)]
+
+# Convert time back to hr:min:sec format and set as index
+day_walks.time = day_walks.time.apply(lambda x: datetime.strftime(x, &quot;%H:%M:%S&quot;))
+day_walks.set_index('time', inplace=True)
+</code></pre>
+<pre><code class="language-python"># Plot walks on May 1st
+fig, ax = plt.subplots()
+
+day_walks.rolling(15).mean().plot(ax=ax)  # 15 min rolling avg to smooth out noise
+ax.set_title('Steps on May 1st 2020 during a walk')
+ax.set_xlabel('Time of Day')
+ax.set_ylabel('Steps per min')
+
+plt.show()
+</code></pre>
+<p><img src="/img/notebook_71_0.png" alt="png"></p>
+<h4 id="visualise-walk-times-for-each-day-of-the-week">Visualise walk times for each day of the week.</h4>
+<p>We can build a picture of the &lsquo;average&rsquo; day over the last 5 months, broken down by day of the week.</p>
+<pre><code class="language-python"># Add a weekday column to walks dataset for grouping
+walks['weekday'] = walks.time.apply(lambda x: datetime.strftime(x, &quot;%A&quot;))
+walks
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>stepcount</th>
+      <th>weekday</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2019-10-01 00:00:00</td>
+      <td>0</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2019-10-01 00:01:00</td>
+      <td>0</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2019-10-01 00:02:00</td>
+      <td>0</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2019-10-01 00:03:00</td>
+      <td>0</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2019-10-01 00:04:00</td>
+      <td>0</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>332635</th>
+      <td>2020-05-18 23:55:00</td>
+      <td>0</td>
+      <td>Monday</td>
+    </tr>
+    <tr>
+      <th>332636</th>
+      <td>2020-05-18 23:56:00</td>
+      <td>0</td>
+      <td>Monday</td>
+    </tr>
+    <tr>
+      <th>332637</th>
+      <td>2020-05-18 23:57:00</td>
+      <td>0</td>
+      <td>Monday</td>
+    </tr>
+    <tr>
+      <th>332638</th>
+      <td>2020-05-18 23:58:00</td>
+      <td>0</td>
+      <td>Monday</td>
+    </tr>
+    <tr>
+      <th>332639</th>
+      <td>2020-05-18 23:59:00</td>
+      <td>0</td>
+      <td>Monday</td>
+    </tr>
+  </tbody>
+</table>
+<p>332640 rows × 3 columns</p>
+</div>
+<pre><code class="language-python"># change date column to hour:min strings for grouping
+walks.time = walks.time.apply(lambda x: datetime.strftime(x, &quot;%H:%M&quot;))
+
+# for each day of the week, average step count over all dates
+walks_weekday = walks.groupby('weekday') 
+
+weekdays = {}
+for day_name, df in walks_weekday:
+    # group by minute, then average over dates
+    df = df.groupby('time').mean()
+    weekdays[day_name] = df
+</code></pre>
+<pre><code class="language-python"># Restrict to waking hours, say 7:00am to 23:59pm
+for day in weekdays:
+    weekdays[day] = weekdays[day].iloc[420:]
+</code></pre>
+<pre><code class="language-python">weekdays['Saturday'].rolling(15).mean().plot()
+plt.show()
+</code></pre>
+<p><img src="/img/notebook_76_0.png" alt="png"></p>
+<p>We can now visualise each day of the week, separately.</p>
+<pre><code class="language-python"># Plot each day of the week
+days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+fig1, axes1 = plt.subplots(1, 5, figsize=(25, 5))
+fig2, axes2 = plt.subplots(1, 2, figsize=(25, 5))
+
+# Plot Monday-Friday first
+for i in range(5):
+    # Take 15min rolling average
+    df = weekdays[days[i]].rolling(15).mean()
+    
+    # Relabel
+    df.rename(columns={'stepcount': 'steps/min'}, inplace=True)
+    
+    # Plot day
+    df.plot(ax=axes1[i])
+    axes1[i].set_title(days[i])
+    axes1[i].set_xlabel(&quot;Time of Day&quot;)
+    
+# Then plot Saturday-Sunday
+for i in range(2):
+    # Take 15 min rolling average
+    df = weekdays[days[5+i]].rolling(15).mean()
+    
+    # Relabel
+    df.rename(columns={'stepcount': 'steps/min'}, inplace=True)
+
+    # Plot day
+    df.plot(ax=axes2[i])
+    axes2[i].set_title(days[5+i])
+    axes2[i].set_xlabel(&quot;Time of Day&quot;)
+</code></pre>
+<p><img src="/img/notebook_78_0.png" alt="png"></p>
+<p><img src="/img/notebook_78_1.png" alt="png"></p>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  </div>
+</article>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = true;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    
+  </p>
+
+  
+  
+
+
+
+
+
+
+  <p class="powered-by">
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
