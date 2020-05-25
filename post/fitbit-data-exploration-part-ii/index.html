@@ -411,6 +411,35 @@
         
         
 
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
       
 
         
@@ -1010,7 +1039,7 @@ plt.ylabel('steps')
 plt.ylim([0, 18000])
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_57_0.png" alt="png"></p>
+<p><img src="/img/notebook_60_0.png" alt="png"></p>
 <h3 id="32-visualising-walks-over-the-day">3.2. Visualising walks over the day</h3>
 <pre><code class="language-python"># Load in dataset
 steps = pd.read_csv(&quot;./data/tidy/steps_2019-10-01_to_2020-05-18.csv&quot;)
@@ -1126,10 +1155,10 @@ ax.set_ylabel('Steps per min')
 
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_62_0.png" alt="png"></p>
+<p><img src="/img/notebook_65_0.png" alt="png"></p>
 <p>Let&rsquo;s isolate the steps that result from walks and not from general activity. The activity dataset has timestamps for each activity (walk, run, &hellip;) and we may use these to filter our dataset. Let&rsquo;s add a column named &lsquo;on_walk&rsquo; to the steps dataset, with a True/False value.</p>
 <pre><code class="language-python"># Load activities dataset
-activities = pd.read_csv(&quot;./data/tidy/activities_2019-10-01_to_2020-05-17.csv&quot;)
+activities = pd.read_csv(&quot;./data/tidy/activities_2019-10-01_to_2020-05-18.csv&quot;)
 display(activities.head(3))
 
 # Convert time columns to datetime objects for analysis
@@ -1352,7 +1381,7 @@ ax.set_ylabel('Steps per min')
 
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_71_0.png" alt="png"></p>
+<p><img src="/img/notebook_74_0.png" alt="png"></p>
 <h4 id="visualise-walk-times-for-each-day-of-the-week">Visualise walk times for each day of the week.</h4>
 <p>We can build a picture of the &lsquo;average&rsquo; day over the last 5 months, broken down by day of the week.</p>
 <pre><code class="language-python"># Add a weekday column to walks dataset for grouping
@@ -1472,7 +1501,7 @@ for day in weekdays:
 <pre><code class="language-python">weekdays['Saturday'].rolling(15).mean().plot()
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_76_0.png" alt="png"></p>
+<p><img src="/img/notebook_79_0.png" alt="png"></p>
 <p>We can now visualise each day of the week, separately.</p>
 <pre><code class="language-python"># Plot each day of the week
 days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -1506,8 +1535,8 @@ for i in range(2):
     axes2[i].set_title(days[5+i])
     axes2[i].set_xlabel(&quot;Time of Day&quot;)
 </code></pre>
-<p><img src="/img/notebook_78_0.png" alt="png"></p>
-<p><img src="/img/notebook_78_1.png" alt="png"></p>
+<p><img src="/img/notebook_81_0.png" alt="png"></p>
+<p><img src="/img/notebook_81_1.png" alt="png"></p>
 
     </div>
 

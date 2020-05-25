@@ -30,8 +30,8 @@
 &lt;li&gt;The 
 &lt;a href=&#34;https://pypi.org/project/fitbit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;python-fitbit api&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;The 
-&lt;a href=&#34;https://pypi.org/project/ratelimit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;ratelimit library&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;The pandas, matplotlib, datetime standard libraries&lt;/li&gt;
+&lt;a href=&#34;https://pypi.org/project/ratelimit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;ratelimit package&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;The datetime, json, matplotlib and pandas standard libraries&lt;/li&gt;
 &lt;/ul&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;import fitbit
 import json
@@ -43,27 +43,39 @@ from ratelimit import limits, sleep_and_retry
 %matplotlib inline
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h2 id=&#34;1-data-collection&#34;&gt;1. Data Collection&lt;/h2&gt;
+&lt;p&gt;We do this in two steps:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;We first access the API via python-fitbit, dealing with the necessary authentication steps.&lt;/li&gt;
+&lt;li&gt;We then sample some responses, and build datasets by querying over a range of dates.&lt;/li&gt;
+&lt;/ul&gt;
 &lt;h3 id=&#34;11-authentication-setup&#34;&gt;1.1. Authentication setup&lt;/h3&gt;
-&lt;p&gt;To obtain personal data, we will use the python-fitbit API, a Python wrapper for the Fitbit API. This first requires you to 
-&lt;a href=&#34;&#34;&gt;set-up a Fitbit app&lt;/a&gt;, and to collect the client_id and client_secret for this app. For this project I&amp;rsquo;ve chosen to keep these in a credentials.json file stored in a dedicated subfolder named &amp;lsquo;oauth&amp;rsquo;.&lt;/p&gt;
+&lt;p&gt;To collect personal data, we first need to 
+&lt;a href=&#34;https://dev.fitbit.com/apps/new&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;set-up a Fitbit app&lt;/a&gt;, and to collect the client_id and client_secret for this app. For this project I&amp;rsquo;ve chosen to keep these in a credentials.json file stored in a dedicated subfolder named &amp;lsquo;oauth&amp;rsquo;, but just make sure you have these on hand.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;!cat oauth/credentials.json
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;{&amp;quot;client_id&amp;quot;: &amp;quot;YOUR_CLIENT_ID&amp;quot;, &amp;quot;client_secret&amp;quot;: &amp;quot;YOUR_CLIENT_SECRET&amp;quot;}
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;In order to access the API, we will also need access tokens to authenticate. An access and refresh token can be obtained by following the official guide 
-&lt;a href=&#34;&#34;&gt;here&lt;/a&gt;. Alternatively, one can obtain them directly by running the script &amp;ldquo;gather_your_keys.py&amp;rdquo; available at the python-fitbit 
-&lt;a href=&#34;&#34;&gt;github page&lt;/a&gt;. Similarly, I chose to store these in a json file named &amp;lsquo;tokens&amp;rsquo;.&lt;/p&gt;
+&lt;p&gt;We also need tokens for authentication. We need:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;An access token.&lt;/li&gt;
+&lt;li&gt;A refresh token.&lt;/li&gt;
+&lt;li&gt;An expiration time for the access token (the refresh token never expires).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These can be obtained by going to the 
+&lt;a href=&#34;https://dev.fitbit.com/apps&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Manage my apps&lt;/a&gt; section on the Fitbit website, selecting your app and navigating to &amp;ldquo;OAuth 2.0 tutorial page&amp;rdquo;. Alternatively, you can run the script &amp;ldquo;gather_keys_oauth2.py&amp;rdquo; from the python-fitbit 
+&lt;a href=&#34;https://github.com/orcasgit/python-fitbit&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;github page&lt;/a&gt;, in which case you should set your Fitbit app&amp;rsquo;s callback URL to https://127.0.0.1:8080/.&lt;/p&gt;
+&lt;p&gt;The access token serves to authenticate and typically expires after ~8 hours. The refresh token is then used to obtain a new pair (access_token, refresh_token) from the API. Similar to above, I chose to store these in a json file named &amp;lsquo;tokens&amp;rsquo;.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;!cat oauth/tokens.json
 &lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;{&amp;quot;access_token&amp;quot;: &amp;quot;YOUR_ACCESS_TOKEN&amp;quot;, &amp;quot;expires_in&amp;quot;: 28800, &amp;quot;refresh_token&amp;quot;: &amp;quot;YOUR_REFRESH_TOKEN&amp;quot;, &amp;quot;scope&amp;quot;: [&amp;quot;profile&amp;quot;, &amp;quot;social&amp;quot;, &amp;quot;sleep&amp;quot;, &amp;quot;settings&amp;quot;, &amp;quot;location&amp;quot;, &amp;quot;heartrate&amp;quot;, &amp;quot;activity&amp;quot;, &amp;quot;nutrition&amp;quot;, &amp;quot;weight&amp;quot;], &amp;quot;token_type&amp;quot;: &amp;quot;Bearer&amp;quot;, &amp;quot;user_id&amp;quot;: &amp;quot;USER_ID&amp;quot;, &amp;quot;expires_at&amp;quot;: 1589930317.083361}
+&lt;pre&gt;&lt;code&gt;{&amp;quot;access_token&amp;quot;: &amp;quot;YOUR_ACCESS_TOKEN&amp;quot;, &amp;quot;expires_in&amp;quot;: 28800, &amp;quot;refresh_token&amp;quot;: &amp;quot;YOUR_REFRESH_TOKEN&amp;quot;, &amp;quot;scope&amp;quot;: [&amp;quot;location&amp;quot;, &amp;quot;heartrate&amp;quot;, &amp;quot;social&amp;quot;, &amp;quot;weight&amp;quot;, &amp;quot;settings&amp;quot;, &amp;quot;profile&amp;quot;, &amp;quot;nutrition&amp;quot;, &amp;quot;activity&amp;quot;, &amp;quot;sleep&amp;quot;], &amp;quot;token_type&amp;quot;: &amp;quot;Bearer&amp;quot;, &amp;quot;user_id&amp;quot;: &amp;quot;USER_ID&amp;quot;, &amp;quot;expires_at&amp;quot;: 1590460521.3563423}
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The only important keys are &amp;ldquo;access_token&amp;rdquo; and &amp;ldquo;refresh_token&amp;rdquo; (the rest corresponds to optional arguments). Given our credentials and access/refresh tokens, we can instantiate a fitbit client which will handle API calls for us, using the tokens for authentication.&lt;/p&gt;
-&lt;p&gt;The access_token is only good for 8 hours after first emitted. The way the API handles this is by giving you a refresh_token, which never deprecates, and can be used to obtain a new pair (access_token, refresh_token) of valid tokens after the access token expires. The client then needs to know where to store this pair (in our case, in tokens.json), and so we will pass it a token refresh method telling it how to do this.&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# load credentials
+&lt;p&gt;The only important keys above are &amp;ldquo;access_token&amp;rdquo;, &amp;ldquo;refresh_token&amp;rdquo; and &amp;ldquo;expires_at&amp;rdquo; (the rest corresponds to optional arguments).&lt;/p&gt;
+&lt;p&gt;Next up, the code below instantiates a fitbit client which will handle API calls for us. We pass along the credentials and tokens as arguments, and we also pass a &amp;ldquo;token refresh&amp;rdquo; function which will store the new (access_token, refresh_token) pair sent by the API whenever the first one expires.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load credentials
 with open(&amp;quot;./oauth/credentials.json&amp;quot;, &amp;quot;r&amp;quot;) as f:
     credentials = json.load(f)
 
-# load tokens
+# Load tokens
 with open(&amp;quot;./oauth/tokens.json&amp;quot;, &amp;quot;r&amp;quot;) as f:  
     tokens = json.load(f)  
 
@@ -73,30 +85,36 @@ access_token = tokens[&#39;access_token&#39;]
 refresh_token = tokens[&#39;refresh_token&#39;]
 expires_at = tokens[&#39;expires_at&#39;] 
 
-# token refresh method 
+# Token refresh method 
 def refresh_callback(token):   
     &amp;quot;&amp;quot;&amp;quot; Called when the OAuth token has been refreshed &amp;quot;&amp;quot;&amp;quot; 
     with open(&amp;quot;./oauth/tokens.json&amp;quot;, &amp;quot;w&amp;quot;) as f: 
         json.dump(token, f)  
 
-# initialise client  
+# Initialise client  
 client = fitbit.Fitbit(client_id=client_id, 
                        client_secret=client_secret,
                        access_token=access_token,
                        refresh_token=refresh_token,
                        refresh_cb=refresh_callback)
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;From there on, everytime the access token expires, new access and refresh tokens are issued and stored by the refresh_callback method, and we don&amp;rsquo;t need to reauthorise.&lt;/p&gt;
+&lt;p&gt;The first time this is called you should be served an authorisation page for authentication, but afterwards the refresh token song &amp;amp; dance should handle this in the background, and we won&amp;rsquo;t need to set it up again unless you lose your tokens.&lt;/p&gt;
 &lt;h3 id=&#34;12-a-first-look-at-the-response-data&#34;&gt;1.2. A first look at the response data&lt;/h3&gt;
 &lt;p&gt;The python-fitbit api supports the methods listed 
-&lt;a href=&#34;https://python-fitbit.readthedocs.io/en/latest/#fitbit-api&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;. We&amp;rsquo;ll be interested in getting the activities data, as well as the intraday steps data which logs our minute-by-minute stepcount during the day.&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get activity data for one date, say May 1st
+&lt;a href=&#34;https://python-fitbit.readthedocs.io/en/latest/#fitbit-api&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;. For example, we could call:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;client.sleep&lt;/strong&gt;, to get basic sleep data (bed time and wake time, time awake at night, &amp;hellip;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client.activities&lt;/strong&gt;, to get timestamps for activities (walking, running, cycling, &amp;hellip;) and summary data (number of steps, minutes active, &amp;hellip;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client.intraday_time_series&lt;/strong&gt;, to get granular data on various activities (such as heart rate or steps rate for every minute of the day).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We&amp;rsquo;ll be interested in the activities and intraday steps data. Now, let&amp;rsquo;s take a look at the response for one date, say May 1st.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get activity data for May 1st
+# The API takes a date formatted as &#39;YYYY-MM-DD&#39;
 date = &#39;2020-05-01&#39;
 activities_response = client.activities(date=date)
 
-# Look at the response object
-display(activities_response)
-print(&amp;quot;The type of activities_response is: {}&amp;quot;.format(type(activities_response)))
+# Display response
+activities_response
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;{&#39;activities&#39;: [{&#39;activityId&#39;: 90013,
    &#39;activityParentId&#39;: 90013,
@@ -150,15 +168,17 @@ print(&amp;quot;The type of activities_response is: {}&amp;quot;.format(type(act
   &#39;sedentaryMinutes&#39;: 578,
   &#39;steps&#39;: 9887,
   &#39;veryActiveMinutes&#39;: 49}}
-
-
-The type of activities_response is: &amp;lt;class &#39;dict&#39;&amp;gt;
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The dataset consists of nested dictionaries. We&amp;rsquo;ll extract two datasets from the &amp;lsquo;activities&amp;rsquo; and &amp;lsquo;summary&amp;rsquo; keys.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s look at the type of the response object.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;type(activities_response)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;dict
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The response consists of nested dictionaries. We&amp;rsquo;ll extract two datasets from the &amp;lsquo;activities&amp;rsquo; and &amp;lsquo;summary&amp;rsquo; keys.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get activities dataset
 activities = activities_response[&#39;activities&#39;]
 activities = pd.DataFrame(activities)
-display(activities)
+activities
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div&gt;
 &lt;style scoped&gt;
@@ -283,7 +303,7 @@ steps = steps_response[&#39;activities-steps-intraday&#39;][&#39;dataset&#39;]
 
 # Display dataset
 steps = pd.DataFrame(steps)
-display(steps)
+steps
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div&gt;
 &lt;style scoped&gt;
@@ -369,15 +389,19 @@ display(steps)
 &lt;/div&gt;
 &lt;p&gt;We get the minute-by-minute count of steps on that day. Let&amp;rsquo;s take a quick look at a plot.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;steps.plot()
+plt.show()
 &lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7ff4f1838670&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_17_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_19_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 &lt;h3 id=&#34;13-collect-activity-and-intraday-steps-data-since-october-1st&#34;&gt;1.3. Collect activity and intraday steps data since October 1st.&lt;/h3&gt;
-&lt;p&gt;We can now iterate this, calling the fitbit API for each day since October 1st and collecting the result into three datasets. We saw that the python-fitbit api takes in dates formatted as &amp;lsquo;YYYY-MM-DD&amp;rsquo;; we can use the date_range method in pandas to produce a list of datetime objects, and then format the dates using the strftime method in datetime.&lt;/p&gt;
-&lt;p&gt;Additionally, we have to remember that the Fitbit API has a rate limit of 150 API calls / hour, and so we will use the ratelimit library to restrict our collection rate.&lt;/p&gt;
-&lt;p&gt;First, let&amp;rsquo;s get a list of dates.&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get date range from October 1st to today
+&lt;p&gt;We can now build our datasets, which will consists of general activity data and intraday steps data from October 1st to yesterday. We will:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Produce a list of dates in &amp;lsquo;YYYY-MM-DD&amp;rsquo; string format for our queries.&lt;/li&gt;
+&lt;li&gt;Query the API for each date, extracting our &amp;lsquo;activities&amp;rsquo;, &amp;lsquo;summary&amp;rsquo; and &amp;lsquo;steps&amp;rsquo; datasets from the response.&lt;/li&gt;
+&lt;li&gt;Limit our query rate to 150/hour (since this is the Fitbit API rate limit).&lt;/li&gt;
+&lt;li&gt;Combine and store the results.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;First, let&amp;rsquo;s get a list of dates. We can use the pandas &lt;strong&gt;date_range&lt;/strong&gt; method to produce a list of datetime objects, and format them using the &lt;strong&gt;strftime&lt;/strong&gt; method.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get date range from October 1st to yesterday
 start = pd.to_datetime(&amp;quot;2019-10-01&amp;quot;)
 date_range = pd.date_range(start=start, end=datetime.today() - timedelta(days=1))
 date_range = [datetime.strftime(date, &amp;quot;%Y-%m-%d&amp;quot;) for date in date_range]
@@ -385,17 +409,20 @@ date_range[-5:]
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;[&#39;2020-05-14&#39;, &#39;2020-05-15&#39;, &#39;2020-05-16&#39;, &#39;2020-05-17&#39;, &#39;2020-05-18&#39;]
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Next, we call the API for each day in the list, timestamp the resulting datasets, then store the total datasets in csv files. We do this for each of the &amp;lsquo;activities&amp;rsquo;, &amp;lsquo;summary&amp;rsquo; and &amp;lsquo;steps&amp;rsquo; datasets.&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# We define a data collection function, and we use the ratelimit library
+&lt;p&gt;Next, we query the API for each date in date_range.&lt;/p&gt;
+&lt;p&gt;As seen when we first took a look at the response data, we actually make two API calls per date (i.e. client.activities and client.intraday_time_series). Since the Fitbit API has a rate limit of 150 calls/hour, we should query at most 75 dates an hour. We can accomplish this via the 
+&lt;a href=&#34;https://pypi.org/project/ratelimit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;ratelimit&lt;/a&gt; package, which lets you limit the number of times a function is called over a time period.&lt;/p&gt;
+&lt;p&gt;Finally, we call the API for each day, timestamp the resulting datasets, and store the total in csv files locally.
+We do this for each of the &amp;lsquo;activities&amp;rsquo;, &amp;lsquo;summary&amp;rsquo; and &amp;lsquo;steps&amp;rsquo; datasets. The script below accomplishes this.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# We define a data collection function, and we use the ratelimit package
 # to limit our function to 150 API calls / hour.
-
 ONE_HOUR = 3600
 
 @sleep_and_retry
 @limits(calls=70, period=ONE_HOUR)
 def call_fitbit_api(date):
     &amp;quot;&amp;quot;&amp;quot; Call the Fitbit API for given date in format &#39;YYYY-MM-DD&#39;,
-        Return tuple (activities, summary, steps) dataframes &amp;quot;&amp;quot;&amp;quot;
+        Return tuple (activities, summary, steps) of dataframes &amp;quot;&amp;quot;&amp;quot;
     
     # Call API twice to get activities and steps responses
     activities_data = client.activities(date=date)
@@ -424,7 +451,7 @@ def call_fitbit_api(date):
 
 
 def get_fitbit_data(date_range):
-    &amp;quot;&amp;quot;&amp;quot; Collect &#39;activities&#39;, &#39;summary&#39; and &#39;steps&#39; datasets over date range
+    &amp;quot;&amp;quot;&amp;quot; Collect &#39;activities&#39;, &#39;summary&#39; and &#39;steps&#39; datasets over given dates
         Store as CSV files with format RESOURCE_DATE_to_DATE.csv &amp;quot;&amp;quot;&amp;quot;
     
     daily_df = {
@@ -453,10 +480,10 @@ def get_fitbit_data(date_range):
 get_fitbit_data(date_range=date_range)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h2 id=&#34;2-cleaning-the-data&#34;&gt;2. Cleaning the data&lt;/h2&gt;
+&lt;p&gt;It&amp;rsquo;s time to take a look at each dataset.&lt;/p&gt;
 &lt;h3 id=&#34;21-the-activity-dataset&#34;&gt;2.1. The activity dataset&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities = pd.read_csv(&amp;quot;./data/raw/activities_2019-10-01_to_2020-05-18.csv&amp;quot;)
-display(activities.head(3))
-activities.shape
+activities.head(3)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div&gt;
 &lt;style scoped&gt;
@@ -555,9 +582,11 @@ activities.shape
   &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.shape
+&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;(354, 16)
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Some of the columns contain logging id information, True/False data or duplicate information which is not useful to us. Let&amp;rsquo;s drop these.&lt;/p&gt;
+&lt;p&gt;We have 16 columns, many of which contain logging information, True/False data or duplicate information which is not useful to us. Let&amp;rsquo;s drop these.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;drop_columns = [&#39;activityId&#39;, &#39;activityParentId&#39;, &#39;activityParentName&#39;, &#39;hasStartTime&#39;, 
                 &#39;isFavorite&#39;, &#39;lastModified&#39;, &#39;logId&#39;, &#39;startDate&#39;]
 
@@ -638,8 +667,8 @@ activities.head(3)
   &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;/div&gt;
-&lt;p&gt;The duration isn&amp;rsquo;t immediately readable here. The Fitbit api 
-&lt;a href=&#34;...&#34;&gt;documentation&lt;/a&gt; lists the duration as being in millisecond, so let&amp;rsquo;s put it in minutes and rename accordingly.&lt;/p&gt;
+&lt;p&gt;The duration column isn&amp;rsquo;t easy to parse and is missing units. The Fitbit api 
+&lt;a href=&#34;https://dev.fitbit.com/build/reference/web-api/activity/#activity-logging&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;documentation&lt;/a&gt; lists the duration as being in millisecond, so let&amp;rsquo;s put it in minutes and rename accordingly.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.duration = activities.duration.apply(lambda x: round(x/60000))
 activities.rename(columns={&#39;duration&#39;: &#39;duration_min&#39;}, inplace=True)
 
@@ -789,7 +818,7 @@ column_order = [&#39;date&#39;, &#39;name&#39;, &#39;description&#39;, &#39;star
 activities = activities[column_order]
 
 # Store dataset
-start, end = activities.date[0], activities.date[len(activities.index)-1]
+start, end = date_range[0], date_range[-1]
 activities.to_csv(&amp;quot;./data/tidy/activities_{}_to_{}.csv&amp;quot;.format(start, end), index=False)
 
 # Look at end result
@@ -950,6 +979,7 @@ activities
 &lt;p&gt;354 rows × 8 columns&lt;/p&gt;
 &lt;/div&gt;
 &lt;h3 id=&#34;22-the-summary-dataset&#34;&gt;2.2. The summary dataset&lt;/h3&gt;
+&lt;p&gt;Now let&amp;rsquo;s take a look at the second dataset.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;summary = pd.read_csv(&amp;quot;./data/raw/summary_2019-10-01_to_2020-05-18.csv&amp;quot;)
 summary
 &lt;/code&gt;&lt;/pre&gt;
@@ -1155,7 +1185,7 @@ summary
 &lt;/table&gt;
 &lt;p&gt;231 rows × 12 columns&lt;/p&gt;
 &lt;/div&gt;
-&lt;p&gt;The activeScore columns is added by the python-fitbit wrapper to the Fitbit API. All values are -1 in our dataset so there&amp;rsquo;s not much loss of information in dropping the column (maybe figure this out a bit better).&lt;/p&gt;
+&lt;p&gt;Now, the activeScore column is added by the python-fitbit wrapper to the Fitbit API. All values are -1 in our dataset so there&amp;rsquo;s not much loss of information in dropping the column.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;(summary.activeScore == -1).all()
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;True
@@ -2013,7 +2043,7 @@ plt.ylabel(&#39;steps&#39;)
 plt.ylim([0, 18000])
 plt.show()
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_57_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_60_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 &lt;h3 id=&#34;32-visualising-walks-over-the-day&#34;&gt;3.2. Visualising walks over the day&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load in dataset
 steps = pd.read_csv(&amp;quot;./data/tidy/steps_2019-10-01_to_2020-05-18.csv&amp;quot;)
@@ -2129,10 +2159,10 @@ ax.set_ylabel(&#39;Steps per min&#39;)
 
 plt.show()
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_62_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_65_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 &lt;p&gt;Let&amp;rsquo;s isolate the steps that result from walks and not from general activity. The activity dataset has timestamps for each activity (walk, run, &amp;hellip;) and we may use these to filter our dataset. Let&amp;rsquo;s add a column named &amp;lsquo;on_walk&amp;rsquo; to the steps dataset, with a True/False value.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load activities dataset
-activities = pd.read_csv(&amp;quot;./data/tidy/activities_2019-10-01_to_2020-05-17.csv&amp;quot;)
+activities = pd.read_csv(&amp;quot;./data/tidy/activities_2019-10-01_to_2020-05-18.csv&amp;quot;)
 display(activities.head(3))
 
 # Convert time columns to datetime objects for analysis
@@ -2355,7 +2385,7 @@ ax.set_ylabel(&#39;Steps per min&#39;)
 
 plt.show()
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_71_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_74_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 &lt;h4 id=&#34;visualise-walk-times-for-each-day-of-the-week&#34;&gt;Visualise walk times for each day of the week.&lt;/h4&gt;
 &lt;p&gt;We can build a picture of the &amp;lsquo;average&amp;rsquo; day over the last 5 months, broken down by day of the week.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Add a weekday column to walks dataset for grouping
@@ -2475,7 +2505,7 @@ for day in weekdays:
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;weekdays[&#39;Saturday&#39;].rolling(15).mean().plot()
 plt.show()
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_76_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_79_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 &lt;p&gt;We can now visualise each day of the week, separately.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Plot each day of the week
 days = [&#39;Monday&#39;, &#39;Tuesday&#39;, &#39;Wednesday&#39;, &#39;Thursday&#39;, &#39;Friday&#39;, &#39;Saturday&#39;, &#39;Sunday&#39;]
@@ -2509,8 +2539,8 @@ for i in range(2):
     axes2[i].set_title(days[5+i])
     axes2[i].set_xlabel(&amp;quot;Time of Day&amp;quot;)
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_78_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_78_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_81_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/notebook_81_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 </description>
     </item>
     
