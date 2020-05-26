@@ -1036,7 +1036,7 @@ plt.ylabel('steps')
 plt.ylim([0, 18000])
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_61_0.png" alt="png"></p>
+<p><img src="/img/posts/fitbit/notebook_61_0.png" alt="png"></p>
 <h3 id="32-visualising-walks-over-the-day">3.2. Visualising walks over the day</h3>
 <p>Let&rsquo;s now look at the steps intraday data.</p>
 <pre><code class="language-python"># Load in dataset
@@ -1150,7 +1150,7 @@ ax.set_xlabel('Time of Day')
 ax.set_ylabel('Steps per min')
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_67_0.png" alt="png"></p>
+<p><img src="/img/posts/fitbit/notebook_67_0.png" alt="png"></p>
 <p>Here we can tell which period corresponds to exercise, and which results from general activity, but let&rsquo;s be more systematic about this. We can isolate the steps that result from walks alone and not from general activity. The activity dataset has a start_time and end_time for each activity (walk, run, &hellip;) and we may use these to filter our dataset.</p>
 <pre><code class="language-python"># Load activities dataset, parsing start_time and end_time columns as datetime objects
 time_col = ['start_time', 'end_time']
@@ -1375,7 +1375,7 @@ ax.set_ylabel('Steps per min')
 
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_78_0.png" alt="png"></p>
+<p><img src="/img/posts/fitbit/notebook_78_0.png" alt="png"></p>
 <h4 id="visualise-walk-times-for-each-day-of-the-week">Visualise walk times for each day of the week.</h4>
 <p>We can build a picture of the &lsquo;average&rsquo; day over the last 5 months, broken down by day of the week.</p>
 <pre><code class="language-python"># Add a weekday column to walks dataset for grouping
@@ -1498,7 +1498,7 @@ for day in weekdays:
 <pre><code class="language-python">weekdays['Monday'].rolling(15).mean().plot()
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_86_0.png" alt="png"></p>
+<p><img src="/img/posts/fitbit/notebook_86_0.png" alt="png"></p>
 <p>Finally, we do this for each day of the week separately.</p>
 <pre><code class="language-python"># Plot each day of the week
 days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -1532,8 +1532,8 @@ for i in range(2):
     axes2[i].set_title(days[5+i])
     axes2[i].set_xlabel(&quot;Time of Day&quot;)
 </code></pre>
-<p><img src="/img/notebook_88_0.png" alt="png"></p>
-<p><img src="/img/notebook_88_1.png" alt="png"></p>
+<p><img src="/img/posts/fitbit/notebook_88_0.png" alt="png"></p>
+<p><img src="/img/posts/fitbit/notebook_88_1.png" alt="png"></p>
 
     </div>
 
