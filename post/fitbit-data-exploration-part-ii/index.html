@@ -565,15 +565,12 @@
   <div class="article-container">
 
     <div class="article-style">
-      <p>In Part I we showed how to connect to the Fitbit API via Python, and we built some datasets consisting of activities and intraday steps data from October to today. In this post we walk through some data visualisations, and will take a look in particular at the intraday steps data.</p>
-<h2 id="3-visualisations">3. Visualisations</h2>
+      <p>In 
+<a href="https://vgelinas.github.io/post/fitbit-data-exploration-part-i/" target="_blank" rel="noopener">Part I</a> we showed how to connect to the Fitbit API via Python, and we built some datasets consisting of activities and intraday steps data from October to today. In this post we walk through some data visualisations, and will take a look in particular at the intraday steps data.</p>
 <h3 id="31-activity-statistics-per-week-day">3.1. Activity statistics per week day</h3>
-<p>Let&rsquo;s compile some statistics based on day of the week.</p>
-<pre><code class="language-python">summary = pd.read_csv(&quot;./data/tidy/summary_2019-10-01_to_2020-05-18.csv&quot;)
-
-# convert date to datetime format
-summary.date = pd.to_datetime(summary.date)
-
+<p>Let&rsquo;s compile some statistics based on day of the week. First, let&rsquo;s take a look at summary data.</p>
+<pre><code class="language-python"># Use parse_dates to interpret our date column as datetime objects
+summary = pd.read_csv(&quot;./data/tidy/summary_2019-10-01_to_2020-05-18.csv&quot;, parse_dates=['date'])
 summary
 </code></pre>
 <div>
@@ -1039,14 +1036,12 @@ plt.ylabel('steps')
 plt.ylim([0, 18000])
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_60_0.png" alt="png"></p>
+<p><img src="/img/notebook_61_0.png" alt="png"></p>
 <h3 id="32-visualising-walks-over-the-day">3.2. Visualising walks over the day</h3>
+<p>Let&rsquo;s now look at the steps intraday data.</p>
 <pre><code class="language-python"># Load in dataset
-steps = pd.read_csv(&quot;./data/tidy/steps_2019-10-01_to_2020-05-18.csv&quot;)
-display(steps)
-
-# Convert time to datetime object for analysis
-steps.time = pd.to_datetime(steps.time)
+steps = pd.read_csv(&quot;./data/tidy/steps_2019-10-01_to_2020-05-18.csv&quot;, parse_dates=['time'])
+steps
 </code></pre>
 <div>
 <style scoped>
@@ -1130,11 +1125,11 @@ steps.time = pd.to_datetime(steps.time)
 </table>
 <p>332640 rows × 2 columns</p>
 </div>
-<p>Let&rsquo;s visualise steps intraday data over a given day.</p>
+<p>Let&rsquo;s visualise steps intraday data over a given day. We look at May 1st again.</p>
 <pre><code class="language-python">date = '2020-05-01'
 
 # Restrict to logs for given date
-day_df = steps[steps.time.apply(lambda x: datetime.strftime(x, &quot;%Y-%m-%d&quot;)) == date].copy()  # deep copy
+day_df = steps[steps.time.apply(lambda x: datetime.strftime(x, &quot;%Y-%m-%d&quot;)) == date].copy()
 
 # Restrict to within waking hours
 start_of_day = pd.to_datetime('2020-05-01 07:00:00')
@@ -1145,6 +1140,7 @@ day_df = day_df[(day_df.time &gt;= start_of_day)&amp;(day_df.time &lt;= end_of_d
 day_df.time = day_df.time.apply(lambda x: datetime.strftime(x, &quot;%H:%M:%S&quot;))
 day_df.set_index('time', inplace=True)
 </code></pre>
+<p>Now let&rsquo;s plot steps during the day on May 1st.</p>
 <pre><code class="language-python"># Plot steps on May 1st
 fig, ax = plt.subplots()
 
@@ -1152,18 +1148,14 @@ day_df.rolling(15).mean().plot(ax=ax)  # 15 min rolling avg to smooth out noise
 ax.set_title('Steps on May 1st, 2020')
 ax.set_xlabel('Time of Day')
 ax.set_ylabel('Steps per min')
-
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_65_0.png" alt="png"></p>
-<p>Let&rsquo;s isolate the steps that result from walks and not from general activity. The activity dataset has timestamps for each activity (walk, run, &hellip;) and we may use these to filter our dataset. Let&rsquo;s add a column named &lsquo;on_walk&rsquo; to the steps dataset, with a True/False value.</p>
-<pre><code class="language-python"># Load activities dataset
-activities = pd.read_csv(&quot;./data/tidy/activities_2019-10-01_to_2020-05-18.csv&quot;)
-display(activities.head(3))
-
-# Convert time columns to datetime objects for analysis
-activities.start_time = pd.to_datetime(activities.start_time)
-activities.end_time = pd.to_datetime(activities.end_time)
+<p><img src="/img/notebook_67_0.png" alt="png"></p>
+<p>Here we can tell which period corresponds to exercise, and which results from general activity, but let&rsquo;s be more systematic about this. We can isolate the steps that result from walks alone and not from general activity. The activity dataset has a start_time and end_time for each activity (walk, run, &hellip;) and we may use these to filter our dataset.</p>
+<pre><code class="language-python"># Load activities dataset, parsing start_time and end_time columns as datetime objects
+time_col = ['start_time', 'end_time']
+activities = pd.read_csv(&quot;./data/tidy/activities_2019-10-01_to_2020-05-18.csv&quot;, parse_dates=time_col)
+activities.head(3)
 </code></pre>
 <div>
 <style scoped>
@@ -1230,6 +1222,7 @@ activities.end_time = pd.to_datetime(activities.end_time)
   </tbody>
 </table>
 </div>
+<p>Let&rsquo;s add a column named &lsquo;on_walk&rsquo; to the steps dataset, with a True/False value. For this we cook up a helper function as below:</p>
 <pre><code class="language-python"># Helper function to filter the intraday steps data by activity type
 def is_during_activity(t, activity):
     &quot;&quot;&quot; Takes a datetime object t and activity name
@@ -1252,7 +1245,8 @@ def is_during_activity(t, activity):
 # Add 'on_walk' column to steps dataframe
 steps['on_walk'] = steps.time.apply(is_during_activity, args=('Walk',))
 </code></pre>
-<pre><code class="language-python">steps
+<p>Let&rsquo;s take a look at the stepcount during walks.</p>
+<pre><code class="language-python">steps[steps.on_walk == True]
 </code></pre>
 <div>
 <style scoped>
@@ -1279,34 +1273,34 @@ steps['on_walk'] = steps.time.apply(is_during_activity, args=('Walk',))
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
-      <td>2019-10-01 00:00:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>646</th>
+      <td>2019-10-01 10:46:00</td>
+      <td>54</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>2019-10-01 00:01:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>647</th>
+      <td>2019-10-01 10:47:00</td>
+      <td>76</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>2019-10-01 00:02:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>648</th>
+      <td>2019-10-01 10:48:00</td>
+      <td>97</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>2019-10-01 00:03:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>649</th>
+      <td>2019-10-01 10:49:00</td>
+      <td>75</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>2019-10-01 00:04:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>650</th>
+      <td>2019-10-01 10:50:00</td>
+      <td>72</td>
+      <td>True</td>
     </tr>
     <tr>
       <th>...</th>
@@ -1315,41 +1309,41 @@ steps['on_walk'] = steps.time.apply(is_during_activity, args=('Walk',))
       <td>...</td>
     </tr>
     <tr>
-      <th>332635</th>
-      <td>2020-05-18 23:55:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>330551</th>
+      <td>2020-05-17 13:11:00</td>
+      <td>113</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>332636</th>
-      <td>2020-05-18 23:56:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>330552</th>
+      <td>2020-05-17 13:12:00</td>
+      <td>92</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>332637</th>
-      <td>2020-05-18 23:57:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>330553</th>
+      <td>2020-05-17 13:13:00</td>
+      <td>77</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>332638</th>
-      <td>2020-05-18 23:58:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>330554</th>
+      <td>2020-05-17 13:14:00</td>
+      <td>35</td>
+      <td>True</td>
     </tr>
     <tr>
-      <th>332639</th>
-      <td>2020-05-18 23:59:00</td>
-      <td>0</td>
-      <td>False</td>
+      <th>330555</th>
+      <td>2020-05-17 13:15:00</td>
+      <td>43</td>
+      <td>True</td>
     </tr>
   </tbody>
 </table>
-<p>332640 rows × 3 columns</p>
+<p>15007 rows × 3 columns</p>
 </div>
-<p>Let&rsquo;s create a new dataframe consisting of walks intraday steps data.</p>
-<pre><code class="language-python"># Remove all steps which are not during a walk
+<p>Using this, we can create a new dataframe consisting of walks stepcount data.</p>
+<pre><code class="language-python"># Set all steps outside of walks to zero
 walks = steps.copy()
 walks.stepcount = walks.stepcount.where(walks.on_walk == True, 0)
     
@@ -1381,7 +1375,7 @@ ax.set_ylabel('Steps per min')
 
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_74_0.png" alt="png"></p>
+<p><img src="/img/notebook_78_0.png" alt="png"></p>
 <h4 id="visualise-walk-times-for-each-day-of-the-week">Visualise walk times for each day of the week.</h4>
 <p>We can build a picture of the &lsquo;average&rsquo; day over the last 5 months, broken down by day of the week.</p>
 <pre><code class="language-python"># Add a weekday column to walks dataset for grouping
@@ -1482,6 +1476,7 @@ walks
 </table>
 <p>332640 rows × 3 columns</p>
 </div>
+<p>To build our daily picture, let&rsquo;s first group the dataset by day of the week, then average the stepcount for each given minute. This should give us a sense of the distribution of walks on each day.</p>
 <pre><code class="language-python"># change date column to hour:min strings for grouping
 walks.time = walks.time.apply(lambda x: datetime.strftime(x, &quot;%H:%M&quot;))
 
@@ -1494,15 +1489,17 @@ for day_name, df in walks_weekday:
     df = df.groupby('time').mean()
     weekdays[day_name] = df
 </code></pre>
+<p>We can also get rid of the timestamps during the night, since I&rsquo;m not up for midnight walks too often.</p>
 <pre><code class="language-python"># Restrict to waking hours, say 7:00am to 23:59pm
 for day in weekdays:
     weekdays[day] = weekdays[day].iloc[420:]
 </code></pre>
-<pre><code class="language-python">weekdays['Saturday'].rolling(15).mean().plot()
+<p>Now, let&rsquo;s look at the distribution of walks on Mondays.</p>
+<pre><code class="language-python">weekdays['Monday'].rolling(15).mean().plot()
 plt.show()
 </code></pre>
-<p><img src="/img/notebook_79_0.png" alt="png"></p>
-<p>We can now visualise each day of the week, separately.</p>
+<p><img src="/img/notebook_86_0.png" alt="png"></p>
+<p>Finally, we do this for each day of the week separately.</p>
 <pre><code class="language-python"># Plot each day of the week
 days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -1535,8 +1532,8 @@ for i in range(2):
     axes2[i].set_title(days[5+i])
     axes2[i].set_xlabel(&quot;Time of Day&quot;)
 </code></pre>
-<p><img src="/img/notebook_81_0.png" alt="png"></p>
-<p><img src="/img/notebook_81_1.png" alt="png"></p>
+<p><img src="/img/notebook_88_0.png" alt="png"></p>
+<p><img src="/img/notebook_88_1.png" alt="png"></p>
 
     </div>
 
