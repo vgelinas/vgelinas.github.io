@@ -1,0 +1,2060 @@
+<!DOCTYPE html><html lang="en-us" >
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Vincent Gélinas">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="In this jupyter notebook we run through a basic prediction task using the Census Income UCI Dataset.">
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://vgelinas.github.io/post/predicting-income-from-census-data/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="hsl(339, 90%, 68%)">
+  
+
+  
+  
+  
+  <script src="/js/mathjax-config.js"></script>
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light" disabled>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark">
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" integrity="" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+  
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="https://vgelinas.github.io/post/predicting-income-from-census-data/">
+
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="Vincent Gélinas">
+  <meta property="og:url" content="https://vgelinas.github.io/post/predicting-income-from-census-data/">
+  <meta property="og:title" content="Predicting Income From Census Data | Vincent Gélinas">
+  <meta property="og:description" content="In this jupyter notebook we run through a basic prediction task using the Census Income UCI Dataset."><meta property="og:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
+  <meta property="twitter:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2020-06-02T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2020-06-02T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://vgelinas.github.io/post/predicting-income-from-census-data/"
+  },
+  "headline": "Predicting Income From Census Data",
+  
+  "datePublished": "2020-06-02T00:00:00Z",
+  "dateModified": "2020-06-02T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Vincent Gélinas"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Vincent Gélinas",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "In this jupyter notebook we run through a basic prediction task using the Census Income UCI Dataset."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Predicting Income From Census Data | Vincent Gélinas</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="dark">
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about"><span>About</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Predicting Income From Census Data</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    Jun 2, 2020
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    10 min read
+  </span>
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      <p>In this notebook we run through a basic prediction task using the 
+<a href="http://archive.ics.uci.edu/ml/datasets/Census&#43;Income" target="_blank" rel="noopener">Census Income UCI Dataset</a>. The task is to predict whether income exceeds $50k/year based on census data.</p>
+<h3 id="dataset-information">Dataset information</h3>
+<p>This dataset consists of 48842 instances and 15 features. The features take on a mix of categorical/numerical values:</p>
+<ol>
+<li><strong>age</strong>: 16+ (continuous).</li>
+<li><strong>workclass</strong>: Private, Self-emp-not-inc, Self-emp-inc, Federal-gov, Local-gov, State-gov, Without-pay, Never-worked.</li>
+<li><strong>fnlwgt</strong>: Final weight, see below (continuous).</li>
+<li><strong>education</strong>: Bachelors, Some-college, 11th, HS-grad, Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool.</li>
+<li><strong>education_num</strong>: Total number of years of education (continuous).</li>
+<li><strong>marital_status</strong>: Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse.</li>
+<li><strong>occupation</strong>: Tech-support, Craft-repair, Other-service, Sales, Exec-managerial, Prof-specialty, Handlers-cleaners, Machine-op-inspct, Adm-clerical, Farming-fishing, Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces.</li>
+<li><strong>relationship</strong>: Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried.</li>
+<li><strong>race</strong>: White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other, Black.</li>
+<li><strong>sex</strong>: Female, Male.</li>
+<li><strong>capital_gain</strong>: continuous.</li>
+<li><strong>capital_loss</strong>: continuous.</li>
+<li><strong>hours_per_week</strong>: Number of hours worked per week (continuous).</li>
+<li><strong>native_country</strong>: United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&amp;Tobago, Peru, Hong, Holand-Netherlands.</li>
+<li><strong>Income</strong>: &gt;50k, &lt;=50k.</li>
+</ol>
+<p>The dataset is already split into train-test sets of sizes (2/3, 1/3). Both sets contain missing values, denoted by &lsquo;?'.</p>
+<h4 id="description-of-fnlwgt-final-weight">Description of fnlwgt (final weight):</h4>
+<p>The weights on the Current Population Survey (CPS) files are controlled to independent estimates of the civilian noninstitutional population of the US. These are prepared monthly for us by Population Division here at the Census Bureau. We use 3 sets of controls. These are:</p>
+<ol>
+<li>A single cell estimate of the population 16+ for each state.</li>
+<li>Controls for Hispanic Origin by age and sex.</li>
+<li>Controls by Race, age and sex.</li>
+</ol>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li>Python 3+</li>
+<li>Pandas, numpy, scikit-learn</li>
+</ul>
+<pre><code class="language-python"># Standard libraries
+import pandas as pd
+import numpy as np
+
+# Train and evaluate models
+import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import GradientBoostingClassifier
+</code></pre>
+<h2 id="1-data-cleaning-and-preprocessing">1. Data cleaning and preprocessing</h2>
+<p>To be consistent in cleaning our data, we will merge the train and test sets into a full dataset and separate it later for model validation.</p>
+<pre><code class="language-python"># Load data
+columns = ['age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 
+           'relationship', 'race', 'sex', 'capital_gain', 'capital_loss', 'hours_per_week', 'native_country',
+           'income']
+
+data_train = pd.read_csv(&quot;./data/adult.data&quot;, sep=', ', header=None, names=columns, engine='python')
+data_test = pd.read_csv(&quot;./data/adult.test&quot;, sep=', ', header=None, skiprows=1, names=columns, engine='python')
+
+display(data_train.head(3))
+display(data_test.head(3))
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education_num</th>
+      <th>marital_status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital_gain</th>
+      <th>capital_loss</th>
+      <th>hours_per_week</th>
+      <th>native_country</th>
+      <th>income</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>39</td>
+      <td>State-gov</td>
+      <td>77516</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Never-married</td>
+      <td>Adm-clerical</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>2174</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>Self-emp-not-inc</td>
+      <td>83311</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>13</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>215646</td>
+      <td>HS-grad</td>
+      <td>9</td>
+      <td>Divorced</td>
+      <td>Handlers-cleaners</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education_num</th>
+      <th>marital_status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital_gain</th>
+      <th>capital_loss</th>
+      <th>hours_per_week</th>
+      <th>native_country</th>
+      <th>income</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>25</td>
+      <td>Private</td>
+      <td>226802</td>
+      <td>11th</td>
+      <td>7</td>
+      <td>Never-married</td>
+      <td>Machine-op-inspct</td>
+      <td>Own-child</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K.</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>89814</td>
+      <td>HS-grad</td>
+      <td>9</td>
+      <td>Married-civ-spouse</td>
+      <td>Farming-fishing</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>50</td>
+      <td>United-States</td>
+      <td>&lt;=50K.</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>28</td>
+      <td>Local-gov</td>
+      <td>336951</td>
+      <td>Assoc-acdm</td>
+      <td>12</td>
+      <td>Married-civ-spouse</td>
+      <td>Protective-serv</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&gt;50K.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<pre><code class="language-python"># Merge datasets
+data = pd.concat([data_train, data_test])
+data
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education_num</th>
+      <th>marital_status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital_gain</th>
+      <th>capital_loss</th>
+      <th>hours_per_week</th>
+      <th>native_country</th>
+      <th>income</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>39</td>
+      <td>State-gov</td>
+      <td>77516</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Never-married</td>
+      <td>Adm-clerical</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>2174</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>Self-emp-not-inc</td>
+      <td>83311</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>13</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>215646</td>
+      <td>HS-grad</td>
+      <td>9</td>
+      <td>Divorced</td>
+      <td>Handlers-cleaners</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>53</td>
+      <td>Private</td>
+      <td>234721</td>
+      <td>11th</td>
+      <td>7</td>
+      <td>Married-civ-spouse</td>
+      <td>Handlers-cleaners</td>
+      <td>Husband</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>28</td>
+      <td>Private</td>
+      <td>338409</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Wife</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>Cuba</td>
+      <td>&lt;=50K</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>16276</th>
+      <td>39</td>
+      <td>Private</td>
+      <td>215419</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Divorced</td>
+      <td>Prof-specialty</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>36</td>
+      <td>United-States</td>
+      <td>&lt;=50K.</td>
+    </tr>
+    <tr>
+      <th>16277</th>
+      <td>64</td>
+      <td>?</td>
+      <td>321403</td>
+      <td>HS-grad</td>
+      <td>9</td>
+      <td>Widowed</td>
+      <td>?</td>
+      <td>Other-relative</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K.</td>
+    </tr>
+    <tr>
+      <th>16278</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>374983</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>50</td>
+      <td>United-States</td>
+      <td>&lt;=50K.</td>
+    </tr>
+    <tr>
+      <th>16279</th>
+      <td>44</td>
+      <td>Private</td>
+      <td>83891</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Divorced</td>
+      <td>Adm-clerical</td>
+      <td>Own-child</td>
+      <td>Asian-Pac-Islander</td>
+      <td>Male</td>
+      <td>5455</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;=50K.</td>
+    </tr>
+    <tr>
+      <th>16280</th>
+      <td>35</td>
+      <td>Self-emp-inc</td>
+      <td>182148</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>United-States</td>
+      <td>&gt;50K.</td>
+    </tr>
+  </tbody>
+</table>
+<p>48842 rows × 15 columns</p>
+</div>
+<h3 id="11-relevant-features">1.1. Relevant features</h3>
+<p>The value of the fnlwgt (final weight) column should have no predictive power, at least without further processing. We will drop this column.</p>
+<pre><code class="language-python"># Drop fnlwgt column
+data.drop('fnlwgt', axis=1, inplace=True)
+</code></pre>
+<h3 id="12-missing-values">1.2. Missing values</h3>
+<p>Missing values are represented as the string &lsquo;?'. We first replace them with NaNs.</p>
+<pre><code class="language-python"># Replace '?' with NaN
+data.replace('?', np.nan, inplace=True)
+</code></pre>
+<pre><code class="language-python"># Count missing values
+data.isna().sum()
+</code></pre>
+<pre><code>age                  0
+workclass         2799
+education            0
+education_num        0
+marital_status       0
+occupation        2809
+relationship         0
+race                 0
+sex                  0
+capital_gain         0
+capital_loss         0
+hours_per_week       0
+native_country     857
+income               0
+dtype: int64
+</code></pre>
+<p>The missing values are all within categorical variables. Since we can&rsquo;t usefully infer them, we drop each row with a missing value.</p>
+<pre><code class="language-python">data.dropna(axis=0, inplace=True)
+</code></pre>
+<p>Finally, reset index for convenience and store full dataset.</p>
+<pre><code class="language-python"># reset index
+data.reset_index(drop=True, inplace=True)
+</code></pre>
+<pre><code class="language-python"># Store full dataset
+data.to_csv(&quot;./data/adult.csv&quot;, index=False)
+</code></pre>
+<h3 id="13-encode-target-feature-as-integers">1.3. Encode target feature as integers</h3>
+<p>The target feature (income column) consists of strings of the form below:</p>
+<pre><code class="language-python">data.income
+</code></pre>
+<pre><code>0         &lt;=50K
+1         &lt;=50K
+2         &lt;=50K
+3         &lt;=50K
+4         &lt;=50K
+          ...  
+45217    &lt;=50K.
+45218    &lt;=50K.
+45219    &lt;=50K.
+45220    &lt;=50K.
+45221     &gt;50K.
+Name: income, Length: 45222, dtype: object
+</code></pre>
+<p>We encode income below 50k as 0, and above 50k as 1.</p>
+<pre><code class="language-python">data.income = data.income.str.strip(&quot;.&quot;)
+</code></pre>
+<pre><code class="language-python">data.income = data.income.map({&quot;&lt;=50K&quot;: 0, &quot;&gt;50K&quot;: 1})
+</code></pre>
+<pre><code class="language-python">data.income.value_counts()
+</code></pre>
+<pre><code>0    34014
+1    11208
+Name: income, dtype: int64
+</code></pre>
+<pre><code class="language-python">data
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>education</th>
+      <th>education_num</th>
+      <th>marital_status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital_gain</th>
+      <th>capital_loss</th>
+      <th>hours_per_week</th>
+      <th>native_country</th>
+      <th>income</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>39</td>
+      <td>State-gov</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Never-married</td>
+      <td>Adm-clerical</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>2174</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>Self-emp-not-inc</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>13</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>HS-grad</td>
+      <td>9</td>
+      <td>Divorced</td>
+      <td>Handlers-cleaners</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>53</td>
+      <td>Private</td>
+      <td>11th</td>
+      <td>7</td>
+      <td>Married-civ-spouse</td>
+      <td>Handlers-cleaners</td>
+      <td>Husband</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>28</td>
+      <td>Private</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Wife</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>Cuba</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>45217</th>
+      <td>33</td>
+      <td>Private</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Never-married</td>
+      <td>Prof-specialty</td>
+      <td>Own-child</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>45218</th>
+      <td>39</td>
+      <td>Private</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Divorced</td>
+      <td>Prof-specialty</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>36</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>45219</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>50</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>45220</th>
+      <td>44</td>
+      <td>Private</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Divorced</td>
+      <td>Adm-clerical</td>
+      <td>Own-child</td>
+      <td>Asian-Pac-Islander</td>
+      <td>Male</td>
+      <td>5455</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>45221</th>
+      <td>35</td>
+      <td>Self-emp-inc</td>
+      <td>Bachelors</td>
+      <td>13</td>
+      <td>Married-civ-spouse</td>
+      <td>Exec-managerial</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>United-States</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+<p>45222 rows × 14 columns</p>
+</div>
+<h3 id="14-one-hot-encode-the-categorical-values">1.4. One-Hot encode the categorical values</h3>
+<pre><code class="language-python">data = pd.get_dummies(data)
+data.shape
+</code></pre>
+<pre><code>(45222, 104)
+</code></pre>
+<pre><code class="language-python">data.head(3)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>education_num</th>
+      <th>capital_gain</th>
+      <th>capital_loss</th>
+      <th>hours_per_week</th>
+      <th>income</th>
+      <th>workclass_Federal-gov</th>
+      <th>workclass_Local-gov</th>
+      <th>workclass_Private</th>
+      <th>workclass_Self-emp-inc</th>
+      <th>...</th>
+      <th>native_country_Portugal</th>
+      <th>native_country_Puerto-Rico</th>
+      <th>native_country_Scotland</th>
+      <th>native_country_South</th>
+      <th>native_country_Taiwan</th>
+      <th>native_country_Thailand</th>
+      <th>native_country_Trinadad&amp;Tobago</th>
+      <th>native_country_United-States</th>
+      <th>native_country_Vietnam</th>
+      <th>native_country_Yugoslavia</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>39</td>
+      <td>13</td>
+      <td>2174</td>
+      <td>0</td>
+      <td>40</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>13</td>
+      <td>0</td>
+      <td>0</td>
+      <td>13</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>9</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>3 rows × 104 columns</p>
+</div>
+<h3 id="14-feature-scaling">1.4. Feature scaling</h3>
+<pre><code class="language-python">X, y = data.drop('income', axis=1), data.income
+</code></pre>
+<pre><code class="language-python">scaler = StandardScaler()
+</code></pre>
+<pre><code class="language-python">scaler.fit(X.loc[:, 'age': 'hours_per_week'])
+X.loc[:, 'age': 'hours_per_week'] = scaler.transform(X.loc[:, 'age': 'hours_per_week'])
+</code></pre>
+<pre><code class="language-python">X.head(5)
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>education_num</th>
+      <th>capital_gain</th>
+      <th>capital_loss</th>
+      <th>hours_per_week</th>
+      <th>workclass_Federal-gov</th>
+      <th>workclass_Local-gov</th>
+      <th>workclass_Private</th>
+      <th>workclass_Self-emp-inc</th>
+      <th>workclass_Self-emp-not-inc</th>
+      <th>...</th>
+      <th>native_country_Portugal</th>
+      <th>native_country_Puerto-Rico</th>
+      <th>native_country_Scotland</th>
+      <th>native_country_South</th>
+      <th>native_country_Taiwan</th>
+      <th>native_country_Thailand</th>
+      <th>native_country_Trinadad&amp;Tobago</th>
+      <th>native_country_United-States</th>
+      <th>native_country_Vietnam</th>
+      <th>native_country_Yugoslavia</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.034201</td>
+      <td>1.128753</td>
+      <td>0.142888</td>
+      <td>-0.21878</td>
+      <td>-0.078120</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.866417</td>
+      <td>1.128753</td>
+      <td>-0.146733</td>
+      <td>-0.21878</td>
+      <td>-2.326738</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-0.041455</td>
+      <td>-0.438122</td>
+      <td>-0.146733</td>
+      <td>-0.21878</td>
+      <td>-0.078120</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.093385</td>
+      <td>-1.221559</td>
+      <td>-0.146733</td>
+      <td>-0.21878</td>
+      <td>-0.078120</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-0.798015</td>
+      <td>1.128753</td>
+      <td>-0.146733</td>
+      <td>-0.21878</td>
+      <td>-0.078120</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 103 columns</p>
+</div>
+<h2 id="2-data-modelling">2. Data modelling</h2>
+<h3 id="21-train-test-split">2.1. Train test split</h3>
+<pre><code class="language-python">X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+</code></pre>
+<h3 id="21-gradient-boosted-trees">2.1. Gradient Boosted Trees</h3>
+<p>We will use gradient boosted regression trees, with parameters tuned via grid search cross-validation. First, let&rsquo;s look at the cross-validation scores with default values to get a baseline.</p>
+<pre><code class="language-python"># Gradient boosted trees with default values
+gbrt = GradientBoostingClassifier(random_state=0)
+kfold = KFold(n_splits=5, shuffle=True, random_state=0)
+scores = cross_val_score(gbrt, X, y, cv=kfold)
+print(&quot;Cross-validation scores: mean {:.3f}, std {:.3f}&quot;.format(scores.mean(), scores.std()))
+</code></pre>
+<pre><code>Cross-validation scores: mean 0.863, std 0.001
+</code></pre>
+<p>We&rsquo;ll try tuning the following parameters:</p>
+<ul>
+<li>max_depth (defaults to 3)</li>
+<li>n_estimators (defaults to 100)</li>
+</ul>
+<p>We also keep random_state=0 as above for reproducibility.</p>
+<pre><code class="language-python"># Parameter grid to optimise over
+param_grid = {
+    'random_state': [0],
+    'max_depth': [2, 3, 4, 5],
+    'n_estimators': [50, 100, 150, 200, 250, 300],
+}
+
+# Train our model
+grid_search = GridSearchCV(GradientBoostingClassifier(), param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+
+# Get scores and model information
+print(&quot;Best parameters: {}&quot;.format(grid_search.best_params_))
+print(&quot;Best cross-validation score: {:.3f}&quot;.format(grid_search.best_score_))
+print(&quot;Best estimator:\n{}&quot;.format(grid_search.best_estimator_))
+</code></pre>
+<pre><code>Best parameters: {'max_depth': 5, 'n_estimators': 200, 'random_state': 0}
+Best cross-validation score: 0.869
+Best estimator:
+GradientBoostingClassifier(ccp_alpha=0.0, criterion='friedman_mse', init=None,
+                           learning_rate=0.1, loss='deviance', max_depth=5,
+                           max_features=None, max_leaf_nodes=None,
+                           min_impurity_decrease=0.0, min_impurity_split=None,
+                           min_samples_leaf=1, min_samples_split=2,
+                           min_weight_fraction_leaf=0.0, n_estimators=200,
+                           n_iter_no_change=None, presort='deprecated',
+                           random_state=0, subsample=1.0, tol=0.0001,
+                           validation_fraction=0.1, verbose=0,
+                           warm_start=False)
+</code></pre>
+<p>With some tuning of parameters, we see that our accuracy should raise to ~0.869 using max_depth = 5 and n_estimators=200. Let&rsquo;s try our newly fitted model on the test set.</p>
+<pre><code class="language-python"># Get train and test set scores
+print(&quot;Train set score: {:.3f}&quot;.format(grid_search.score(X_train, y_train)))
+print(&quot;Test set score: {:.3f}&quot;.format(grid_search.score(X_test, y_test)))
+</code></pre>
+<pre><code>Train set score: 0.884
+Test set score: 0.870
+</code></pre>
+<p>Our gradient boosted tree model then achieves a test set accuracy of 87%.</p>
+<h4 id="further-tuning">Further tuning</h4>
+<p>Should we wish to tune parameters further, it would be useful to look at the grid search history to see the accuracy as a function of parameters. This can be extracted by the cv_results_ method, as seen below.</p>
+<pre><code class="language-python">results = pd.DataFrame(grid_search.cv_results_)
+results.head()
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mean_fit_time</th>
+      <th>std_fit_time</th>
+      <th>mean_score_time</th>
+      <th>std_score_time</th>
+      <th>param_max_depth</th>
+      <th>param_n_estimators</th>
+      <th>param_random_state</th>
+      <th>params</th>
+      <th>split0_test_score</th>
+      <th>split1_test_score</th>
+      <th>split2_test_score</th>
+      <th>split3_test_score</th>
+      <th>split4_test_score</th>
+      <th>mean_test_score</th>
+      <th>std_test_score</th>
+      <th>rank_test_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.160780</td>
+      <td>0.037878</td>
+      <td>0.007860</td>
+      <td>0.000821</td>
+      <td>2</td>
+      <td>50</td>
+      <td>0</td>
+      <td>{'max_depth': 2, 'n_estimators': 50, 'random_s...</td>
+      <td>0.847583</td>
+      <td>0.855079</td>
+      <td>0.854931</td>
+      <td>0.850361</td>
+      <td>0.852573</td>
+      <td>0.852105</td>
+      <td>0.002848</td>
+      <td>24</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.187243</td>
+      <td>0.120700</td>
+      <td>0.009864</td>
+      <td>0.000370</td>
+      <td>2</td>
+      <td>100</td>
+      <td>0</td>
+      <td>{'max_depth': 2, 'n_estimators': 100, 'random_...</td>
+      <td>0.851562</td>
+      <td>0.861566</td>
+      <td>0.857880</td>
+      <td>0.853457</td>
+      <td>0.857585</td>
+      <td>0.856410</td>
+      <td>0.003531</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3.099185</td>
+      <td>0.006702</td>
+      <td>0.011799</td>
+      <td>0.000122</td>
+      <td>2</td>
+      <td>150</td>
+      <td>0</td>
+      <td>{'max_depth': 2, 'n_estimators': 150, 'random_...</td>
+      <td>0.855248</td>
+      <td>0.863777</td>
+      <td>0.859502</td>
+      <td>0.856848</td>
+      <td>0.858322</td>
+      <td>0.858739</td>
+      <td>0.002895</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4.104170</td>
+      <td>0.012035</td>
+      <td>0.013877</td>
+      <td>0.000131</td>
+      <td>2</td>
+      <td>200</td>
+      <td>0</td>
+      <td>{'max_depth': 2, 'n_estimators': 200, 'random_...</td>
+      <td>0.858343</td>
+      <td>0.867168</td>
+      <td>0.860386</td>
+      <td>0.859502</td>
+      <td>0.860829</td>
+      <td>0.861246</td>
+      <td>0.003081</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5.089706</td>
+      <td>0.007495</td>
+      <td>0.015999</td>
+      <td>0.000137</td>
+      <td>2</td>
+      <td>250</td>
+      <td>0</td>
+      <td>{'max_depth': 2, 'n_estimators': 250, 'random_...</td>
+      <td>0.859080</td>
+      <td>0.868790</td>
+      <td>0.862893</td>
+      <td>0.860091</td>
+      <td>0.861566</td>
+      <td>0.862484</td>
+      <td>0.003408</td>
+      <td>17</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>However to keep this post short, we will leave it at that.</p>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  </div>
+</article>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = true;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    
+  </p>
+
+  
+  
+
+
+
+
+
+
+  <p class="powered-by">
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
