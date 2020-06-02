@@ -13,7 +13,7 @@
     </image>
     
     <item>
-      <title>Predicting Income From Census Data</title>
+      <title>Income From Census Data</title>
       <link>https://vgelinas.github.io/post/predicting-income-from-census-data/</link>
       <pubDate>Tue, 02 Jun 2020 00:00:00 +0000</pubDate>
       <guid>https://vgelinas.github.io/post/predicting-income-from-census-data/</guid>
@@ -40,11 +40,12 @@
 &lt;/ol&gt;
 &lt;p&gt;The dataset is already split into train-test sets of sizes (2/3, 1/3). Both sets contain missing values, denoted by &amp;lsquo;?&#39;.&lt;/p&gt;
 &lt;h4 id=&#34;description-of-fnlwgt-final-weight&#34;&gt;Description of fnlwgt (final weight):&lt;/h4&gt;
-&lt;p&gt;The weights on the Current Population Survey (CPS) files are controlled to independent estimates of the civilian noninstitutional population of the US. These are prepared monthly for us by Population Division here at the Census Bureau. We use 3 sets of controls. These are:&lt;/p&gt;
+&lt;p&gt;The UCI repository lists the additional information for the fnlwgt column:&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;The weights on the Current Population Survey (CPS) files are controlled to independent estimates of the civilian noninstitutional population of the US. These are prepared monthly for us by Population Division here at the Census Bureau. We use 3 sets of controls. These are:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;A single cell estimate of the population 16+ for each state.&lt;/li&gt;
 &lt;li&gt;Controls for Hispanic Origin by age and sex.&lt;/li&gt;
-&lt;li&gt;Controls by Race, age and sex.&lt;/li&gt;
+&lt;li&gt;Controls by Race, age and sex.&amp;rdquo;&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h3 id=&#34;dependencies&#34;&gt;Dependencies&lt;/h3&gt;
 &lt;ul&gt;
