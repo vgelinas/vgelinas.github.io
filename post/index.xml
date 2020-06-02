@@ -927,7 +927,7 @@ data.shape
 &lt;/table&gt;
 &lt;p&gt;3 rows × 104 columns&lt;/p&gt;
 &lt;/div&gt;
-&lt;h3 id=&#34;14-feature-scaling&#34;&gt;1.4. Feature scaling&lt;/h3&gt;
+&lt;h3 id=&#34;15-feature-scaling&#34;&gt;1.5. Feature scaling&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;X, y = data.drop(&#39;income&#39;, axis=1), data.income
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;scaler = StandardScaler()
