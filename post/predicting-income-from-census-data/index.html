@@ -1710,7 +1710,7 @@ print(&quot;Test set score: {:.3f}&quot;.format(grid_search.score(X_test, y_test
 Test set score: 0.870
 </code></pre>
 <p>Our gradient boosted tree model then achieves a test set accuracy of 87%.</p>
-<h4 id="23-further-tuning">2.3. Further tuning</h4>
+<h3 id="23-further-tuning">2.3. Further tuning</h3>
 <p>Should we wish to tune parameters further, it would be useful to look at the grid search history to see the accuracy as a function of parameters. This can be extracted by the cv_results_ method, as seen below.</p>
 <pre><code class="language-python">results = pd.DataFrame(grid_search.cv_results_)
 results.head()
