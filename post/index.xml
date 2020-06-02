@@ -1107,7 +1107,7 @@ X.loc[:, &#39;age&#39;: &#39;hours_per_week&#39;] = scaler.transform(X.loc[:, &#
 &lt;h3 id=&#34;21-train-test-split&#34;&gt;2.1. Train test split&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 &lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id=&#34;21-gradient-boosted-trees&#34;&gt;2.1. Gradient Boosted Trees&lt;/h3&gt;
+&lt;h3 id=&#34;22-gradient-boosted-trees&#34;&gt;2.2. Gradient Boosted Trees&lt;/h3&gt;
 &lt;p&gt;We will use gradient boosted regression trees, with parameters tuned via grid search cross-validation. First, let&amp;rsquo;s look at the cross-validation scores with default values to get a baseline.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Gradient boosted trees with default values
 gbrt = GradientBoostingClassifier(random_state=0)
@@ -1162,7 +1162,7 @@ print(&amp;quot;Test set score: {:.3f}&amp;quot;.format(grid_search.score(X_test
 Test set score: 0.870
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Our gradient boosted tree model then achieves a test set accuracy of 87%.&lt;/p&gt;
-&lt;h4 id=&#34;further-tuning&#34;&gt;Further tuning&lt;/h4&gt;
+&lt;h4 id=&#34;23-further-tuning&#34;&gt;2.3. Further tuning&lt;/h4&gt;
 &lt;p&gt;Should we wish to tune parameters further, it would be useful to look at the grid search history to see the accuracy as a function of parameters. This can be extracted by the cv_results_ method, as seen below.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;results = pd.DataFrame(grid_search.cv_results_)
 results.head()
