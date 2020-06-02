@@ -1,0 +1,2549 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>API | Vincent Gélinas</title>
+    <link>https://vgelinas.github.io/tag/api/</link>
+      <atom:link href="https://vgelinas.github.io/tag/api/index.xml" rel="self" type="application/rss+xml" />
+    <description>API</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Mon, 18 May 2020 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>API</title>
+      <link>https://vgelinas.github.io/tag/api/</link>
+    </image>
+    
+    <item>
+      <title>Fitbit Data Exploration Part I</title>
+      <link>https://vgelinas.github.io/post/fitbit-data-exploration-part-i/</link>
+      <pubDate>Mon, 18 May 2020 00:00:00 +0000</pubDate>
+      <guid>https://vgelinas.github.io/post/fitbit-data-exploration-part-i/</guid>
+      <description>&lt;p&gt;In this project we will explore some Fitbit activity data pulled via 
+&lt;a href=&#34;https://github.com/orcasgit/python-fitbit&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;orcasgit&amp;rsquo;s python-fitbit api&lt;/a&gt;. We will go through the following steps:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Data collection&lt;/li&gt;
+&lt;li&gt;Data cleaning&lt;/li&gt;
+&lt;li&gt;Data visualisation&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;dependencies&#34;&gt;Dependencies&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Python 3+&lt;/li&gt;
+&lt;li&gt;The 
+&lt;a href=&#34;https://pypi.org/project/fitbit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;python-fitbit api&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;The 
+&lt;a href=&#34;https://pypi.org/project/ratelimit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;ratelimit package&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;The datetime, json, matplotlib and pandas standard libraries&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Let&amp;rsquo;s load our packages.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;import fitbit
+import json
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from ratelimit import limits, sleep_and_retry
+
+%matplotlib inline
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;1-data-collection&#34;&gt;1. Data Collection&lt;/h2&gt;
+&lt;p&gt;We do this in two steps:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;We first access the API via python-fitbit, dealing with the necessary authentication steps.&lt;/li&gt;
+&lt;li&gt;We then sample some responses, and build datasets by querying over a range of dates.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;11-authentication-setup&#34;&gt;1.1. Authentication setup&lt;/h3&gt;
+&lt;p&gt;To collect personal data, we first need to 
+&lt;a href=&#34;https://dev.fitbit.com/apps/new&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;set-up a Fitbit app&lt;/a&gt;, and to collect the client_id and client_secret for this app. For this project I&amp;rsquo;ve chosen to keep these in a credentials.json file stored in a dedicated subfolder named &amp;lsquo;oauth&amp;rsquo;, but just make sure you have these on hand.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;!cat oauth/credentials.json
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;{&amp;quot;client_id&amp;quot;: &amp;quot;YOUR_CLIENT_ID&amp;quot;, &amp;quot;client_secret&amp;quot;: &amp;quot;YOUR_CLIENT_SECRET&amp;quot;}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We also need tokens for authentication. We need:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;An access token.&lt;/li&gt;
+&lt;li&gt;A refresh token.&lt;/li&gt;
+&lt;li&gt;An expiration time for the access token (the refresh token never expires).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These can be obtained by going to the 
+&lt;a href=&#34;https://dev.fitbit.com/apps&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Manage my apps&lt;/a&gt; section on the Fitbit website, selecting your app and navigating to &amp;ldquo;OAuth 2.0 tutorial page&amp;rdquo;. Alternatively, you can run the script &amp;ldquo;gather_keys_oauth2.py&amp;rdquo; from the python-fitbit 
+&lt;a href=&#34;https://github.com/orcasgit/python-fitbit&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;github page&lt;/a&gt;, in which case you should set your Fitbit app&amp;rsquo;s callback URL to https://127.0.0.1:8080/.&lt;/p&gt;
+&lt;p&gt;The access token serves to authenticate and typically expires after ~8 hours. The refresh token is then used to obtain a new pair (access_token, refresh_token) from the API. Similar to above, I chose to store these in a json file named &amp;lsquo;tokens&amp;rsquo;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;!cat oauth/tokens.json
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;{&amp;quot;access_token&amp;quot;: &amp;quot;YOUR_ACCESS_TOKEN&amp;quot;, &amp;quot;expires_in&amp;quot;: 28800, &amp;quot;refresh_token&amp;quot;: &amp;quot;YOUR_REFRESH_TOKEN&amp;quot;, &amp;quot;scope&amp;quot;: [&amp;quot;location&amp;quot;, &amp;quot;heartrate&amp;quot;, &amp;quot;social&amp;quot;, &amp;quot;weight&amp;quot;, &amp;quot;settings&amp;quot;, &amp;quot;profile&amp;quot;, &amp;quot;nutrition&amp;quot;, &amp;quot;activity&amp;quot;, &amp;quot;sleep&amp;quot;], &amp;quot;token_type&amp;quot;: &amp;quot;Bearer&amp;quot;, &amp;quot;user_id&amp;quot;: &amp;quot;USER_ID&amp;quot;, &amp;quot;expires_at&amp;quot;: 1590460521.3563423}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The only important keys above are &amp;ldquo;access_token&amp;rdquo;, &amp;ldquo;refresh_token&amp;rdquo; and &amp;ldquo;expires_at&amp;rdquo; (the rest corresponds to optional arguments).&lt;/p&gt;
+&lt;p&gt;Next up, the code below instantiates a fitbit client which will handle API calls for us. We pass along the credentials and tokens as arguments, and we also pass a &amp;ldquo;token refresh&amp;rdquo; function which will store the new (access_token, refresh_token) pair sent by the API whenever the first one expires.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load credentials
+with open(&amp;quot;./oauth/credentials.json&amp;quot;, &amp;quot;r&amp;quot;) as f:
+    credentials = json.load(f)
+
+# Load tokens
+with open(&amp;quot;./oauth/tokens.json&amp;quot;, &amp;quot;r&amp;quot;) as f:  
+    tokens = json.load(f)  
+
+client_id = credentials[&#39;client_id&#39;] 
+client_secret = credentials[&#39;client_secret&#39;]
+access_token = tokens[&#39;access_token&#39;]
+refresh_token = tokens[&#39;refresh_token&#39;]
+expires_at = tokens[&#39;expires_at&#39;] 
+
+# Token refresh method 
+def refresh_callback(token):   
+    &amp;quot;&amp;quot;&amp;quot; Called when the OAuth token has been refreshed &amp;quot;&amp;quot;&amp;quot; 
+    with open(&amp;quot;./oauth/tokens.json&amp;quot;, &amp;quot;w&amp;quot;) as f: 
+        json.dump(token, f)  
+
+# Initialise client  
+client = fitbit.Fitbit(client_id=client_id, 
+                       client_secret=client_secret,
+                       access_token=access_token,
+                       refresh_token=refresh_token,
+                       refresh_cb=refresh_callback)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The first time this is called you should be served an authorisation page for authentication, but afterwards the refresh token song &amp;amp; dance should handle this in the background, and we won&amp;rsquo;t need to set it up again unless you lose your tokens.&lt;/p&gt;
+&lt;h3 id=&#34;12-a-first-look-at-the-response-data&#34;&gt;1.2. A first look at the response data&lt;/h3&gt;
+&lt;p&gt;The python-fitbit api supports the methods listed 
+&lt;a href=&#34;https://python-fitbit.readthedocs.io/en/latest/#fitbit-api&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;. For example, we could call:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;client.sleep&lt;/strong&gt;, to get basic sleep data (bed time and wake time, time awake at night, &amp;hellip;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client.activities&lt;/strong&gt;, to get timestamps for activities (walking, running, cycling, &amp;hellip;) and summary data (number of steps, minutes active, &amp;hellip;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client.intraday_time_series&lt;/strong&gt;, to get granular data on various activities (such as heart rate or steps rate for every minute of the day).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We&amp;rsquo;ll be interested in the activities and intraday steps data. Now, let&amp;rsquo;s take a look at the response for one date, say May 1st.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get activity data for May 1st
+# The API takes a date formatted as &#39;YYYY-MM-DD&#39;
+date = &#39;2020-05-01&#39;
+activities_response = client.activities(date=date)
+
+# Display response
+activities_response
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;{&#39;activities&#39;: [{&#39;activityId&#39;: 90013,
+   &#39;activityParentId&#39;: 90013,
+   &#39;activityParentName&#39;: &#39;Walk&#39;,
+   &#39;calories&#39;: 302,
+   &#39;description&#39;: &#39;Walking less than 2 mph, strolling very slowly&#39;,
+   &#39;duration&#39;: 2714000,
+   &#39;hasStartTime&#39;: True,
+   &#39;isFavorite&#39;: False,
+   &#39;lastModified&#39;: &#39;2020-05-01T13:10:18.000Z&#39;,
+   &#39;logId&#39;: 30758911349,
+   &#39;name&#39;: &#39;Walk&#39;,
+   &#39;startDate&#39;: &#39;2020-05-01&#39;,
+   &#39;startTime&#39;: &#39;08:20&#39;,
+   &#39;steps&#39;: 4000}],
+ &#39;goals&#39;: {&#39;activeMinutes&#39;: 30,
+  &#39;caloriesOut&#39;: 2745,
+  &#39;distance&#39;: 5,
+  &#39;steps&#39;: 12500},
+ &#39;summary&#39;: {&#39;activeScore&#39;: -1,
+  &#39;activityCalories&#39;: 1379,
+  &#39;caloriesBMR&#39;: 1659,
+  &#39;caloriesOut&#39;: 2826,
+  &#39;distances&#39;: [{&#39;activity&#39;: &#39;total&#39;, &#39;distance&#39;: 4.69},
+   {&#39;activity&#39;: &#39;tracker&#39;, &#39;distance&#39;: 4.69},
+   {&#39;activity&#39;: &#39;loggedActivities&#39;, &#39;distance&#39;: 0},
+   {&#39;activity&#39;: &#39;veryActive&#39;, &#39;distance&#39;: 2.6},
+   {&#39;activity&#39;: &#39;moderatelyActive&#39;, &#39;distance&#39;: 0.4},
+   {&#39;activity&#39;: &#39;lightlyActive&#39;, &#39;distance&#39;: 1.68},
+   {&#39;activity&#39;: &#39;sedentaryActive&#39;, &#39;distance&#39;: 0}],
+  &#39;fairlyActiveMinutes&#39;: 25,
+  &#39;heartRateZones&#39;: [{&#39;caloriesOut&#39;: 1916.74877,
+    &#39;max&#39;: 94,
+    &#39;min&#39;: 30,
+    &#39;minutes&#39;: 1255,
+    &#39;name&#39;: &#39;Out of Range&#39;},
+   {&#39;caloriesOut&#39;: 775.70893,
+    &#39;max&#39;: 132,
+    &#39;min&#39;: 94,
+    &#39;minutes&#39;: 137,
+    &#39;name&#39;: &#39;Fat Burn&#39;},
+   {&#39;caloriesOut&#39;: 81.56868,
+    &#39;max&#39;: 160,
+    &#39;min&#39;: 132,
+    &#39;minutes&#39;: 8,
+    &#39;name&#39;: &#39;Cardio&#39;},
+   {&#39;caloriesOut&#39;: 0, &#39;max&#39;: 220, &#39;min&#39;: 160, &#39;minutes&#39;: 0, &#39;name&#39;: &#39;Peak&#39;}],
+  &#39;lightlyActiveMinutes&#39;: 210,
+  &#39;marginalCalories&#39;: 828,
+  &#39;restingHeartRate&#39;: 59,
+  &#39;sedentaryMinutes&#39;: 578,
+  &#39;steps&#39;: 9887,
+  &#39;veryActiveMinutes&#39;: 49}}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let&amp;rsquo;s look at the type of the response object.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;type(activities_response)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;dict
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The response consists of nested dictionaries. We&amp;rsquo;ll extract two datasets from the &amp;lsquo;activities&amp;rsquo; and &amp;lsquo;summary&amp;rsquo; keys.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get activities dataset
+activities = activities_response[&#39;activities&#39;]
+activities = pd.DataFrame(activities)
+activities
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;activityId&lt;/th&gt;
+      &lt;th&gt;activityParentId&lt;/th&gt;
+      &lt;th&gt;activityParentName&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;duration&lt;/th&gt;
+      &lt;th&gt;hasStartTime&lt;/th&gt;
+      &lt;th&gt;isFavorite&lt;/th&gt;
+      &lt;th&gt;lastModified&lt;/th&gt;
+      &lt;th&gt;logId&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;startDate&lt;/th&gt;
+      &lt;th&gt;startTime&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;90013&lt;/td&gt;
+      &lt;td&gt;90013&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;302&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2714000&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+      &lt;td&gt;False&lt;/td&gt;
+      &lt;td&gt;2020-05-01T13:10:18.000Z&lt;/td&gt;
+      &lt;td&gt;30758911349&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2020-05-01&lt;/td&gt;
+      &lt;td&gt;08:20&lt;/td&gt;
+      &lt;td&gt;4000&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get summary dataset
+summary = activities_response[&#39;summary&#39;]
+
+# Remove sub-dictionaries
+del summary[&#39;distances&#39;]
+del summary[&#39;heartRateZones&#39;]
+
+summary = pd.DataFrame(summary, index=[0])  # all values are scalars, must pass an index
+summary
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;activeScore&lt;/th&gt;
+      &lt;th&gt;activityCalories&lt;/th&gt;
+      &lt;th&gt;caloriesBMR&lt;/th&gt;
+      &lt;th&gt;caloriesOut&lt;/th&gt;
+      &lt;th&gt;fairlyActiveMinutes&lt;/th&gt;
+      &lt;th&gt;lightlyActiveMinutes&lt;/th&gt;
+      &lt;th&gt;marginalCalories&lt;/th&gt;
+      &lt;th&gt;restingHeartRate&lt;/th&gt;
+      &lt;th&gt;sedentaryMinutes&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;veryActiveMinutes&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1379&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;2826&lt;/td&gt;
+      &lt;td&gt;25&lt;/td&gt;
+      &lt;td&gt;210&lt;/td&gt;
+      &lt;td&gt;828&lt;/td&gt;
+      &lt;td&gt;59&lt;/td&gt;
+      &lt;td&gt;578&lt;/td&gt;
+      &lt;td&gt;9887&lt;/td&gt;
+      &lt;td&gt;49&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;Next, let&amp;rsquo;s look at the intraday step data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get intraday steps data
+steps_response = client.intraday_time_series(&#39;activities/steps&#39;, base_date=date, detail_level=&amp;quot;1min&amp;quot;)
+
+# Extract dataset from response object
+steps = steps_response[&#39;activities-steps-intraday&#39;][&#39;dataset&#39;]
+
+# Display dataset
+steps = pd.DataFrame(steps)
+steps
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;time&lt;/th&gt;
+      &lt;th&gt;value&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;00:00:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;00:01:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;00:02:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;00:03:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;00:04:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1435&lt;/th&gt;
+      &lt;td&gt;23:55:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1436&lt;/th&gt;
+      &lt;td&gt;23:56:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1437&lt;/th&gt;
+      &lt;td&gt;23:57:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1438&lt;/th&gt;
+      &lt;td&gt;23:58:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1439&lt;/th&gt;
+      &lt;td&gt;23:59:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;1440 rows × 2 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;We get the minute-by-minute count of steps on that day. Let&amp;rsquo;s take a quick look at a plot.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;steps.plot()
+plt.show()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_20_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;h3 id=&#34;13-collect-activity-and-intraday-steps-data-since-october-1st&#34;&gt;1.3. Collect activity and intraday steps data since October 1st.&lt;/h3&gt;
+&lt;p&gt;We can now build our datasets, which will consists of general activity data and intraday steps data from October 1st to yesterday. We will:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Produce a list of dates in &amp;lsquo;YYYY-MM-DD&amp;rsquo; string format for our queries.&lt;/li&gt;
+&lt;li&gt;Query the API for each date, extracting our &amp;lsquo;activities&amp;rsquo;, &amp;lsquo;summary&amp;rsquo; and &amp;lsquo;steps&amp;rsquo; datasets from the response.&lt;/li&gt;
+&lt;li&gt;Limit our query rate to 150/hour (since this is the Fitbit API rate limit).&lt;/li&gt;
+&lt;li&gt;Combine and store the results.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;First, let&amp;rsquo;s get a list of dates. We can use the pandas &lt;strong&gt;date_range&lt;/strong&gt; method to produce a list of datetime objects, and format them using the &lt;strong&gt;strftime&lt;/strong&gt; method.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get date range from October 1st to yesterday
+start = pd.to_datetime(&amp;quot;2019-10-01&amp;quot;)
+date_range = pd.date_range(start=start, end=datetime.today() - timedelta(days=1))
+date_range = [datetime.strftime(date, &amp;quot;%Y-%m-%d&amp;quot;) for date in date_range]
+date_range[-5:]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;[&#39;2020-05-14&#39;, &#39;2020-05-15&#39;, &#39;2020-05-16&#39;, &#39;2020-05-17&#39;, &#39;2020-05-18&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next, we query the API for each date in date_range.&lt;/p&gt;
+&lt;p&gt;As seen when we first took a look at the response data, we actually make two API calls per date (i.e. client.activities and client.intraday_time_series). Since the Fitbit API has a rate limit of 150 calls/hour, we should query at most 75 dates an hour. We can accomplish this via the 
+&lt;a href=&#34;https://pypi.org/project/ratelimit/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;ratelimit&lt;/a&gt; package, which lets you limit the number of times a function is called over a time period.&lt;/p&gt;
+&lt;p&gt;Finally, we call the API for each day, timestamp the resulting datasets, and store the total in csv files locally.
+We do this for each of the &amp;lsquo;activities&amp;rsquo;, &amp;lsquo;summary&amp;rsquo; and &amp;lsquo;steps&amp;rsquo; datasets. The script below accomplishes this.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# We define a data collection function, and we use the ratelimit package
+# to limit our function to 150 API calls / hour.
+ONE_HOUR = 3600
+
+@sleep_and_retry
+@limits(calls=70, period=ONE_HOUR)
+def call_fitbit_api(date):
+    &amp;quot;&amp;quot;&amp;quot; Call the Fitbit API for given date in format &#39;YYYY-MM-DD&#39;,
+        Return tuple (activities, summary, steps) of dataframes &amp;quot;&amp;quot;&amp;quot;
+    
+    # Call API twice to get activities and steps responses
+    activities_data = client.activities(date=date)
+    steps_data = client.intraday_time_series(&#39;activities/steps&#39;, base_date=date, detail_level=&#39;1min&#39;)
+        
+    # Get activities dataset
+    activities = activities_data[&#39;activities&#39;]
+    activities = pd.DataFrame(activities)
+    
+    # Get summary dataset
+    summary = activities_data[&#39;summary&#39;]
+    del summary[&#39;distances&#39;]
+    del summary[&#39;heartRateZones&#39;]
+    summary = pd.DataFrame(summary, index=[0])
+        
+    # Get steps intraday dataset  
+    steps = steps_data[&#39;activities-steps-intraday&#39;][&#39;dataset&#39;]
+    steps = pd.DataFrame(steps)
+    
+    # Add a date column
+    activities[&#39;date&#39;] = [date for i in activities.index]
+    summary[&#39;date&#39;] = [date]
+    steps[&#39;date&#39;] = [date for i in steps.index]
+    
+    return activities, summary, steps
+
+
+def get_fitbit_data(date_range):
+    &amp;quot;&amp;quot;&amp;quot; Collect &#39;activities&#39;, &#39;summary&#39; and &#39;steps&#39; datasets over given dates
+        Store as CSV files with format RESOURCE_DATE_to_DATE.csv &amp;quot;&amp;quot;&amp;quot;
+    
+    daily_df = {
+        &#39;activities&#39;: [],
+        &#39;summary&#39;: [],
+        &#39;steps&#39;: []
+    }
+
+    for date in date_range:
+        # Call API and get three datasets
+        activities, summary, steps = call_fitbit_api(date)
+    
+        # Append to previous datasets
+        daily_df[&#39;activities&#39;].append(activities)
+        daily_df[&#39;summary&#39;].append(summary)
+        daily_df[&#39;steps&#39;].append(steps)
+        
+    # Store total dataset as file with format &amp;quot;resource_DATE_to_DATE.csv&amp;quot;
+    start, end = date_range[0], date_range[-1]
+
+    for resource in daily_df:
+        df = pd.concat(daily_df[resource], ignore_index=True)
+        df.to_csv(&amp;quot;./data/raw/{}_{}_to_{}.csv&amp;quot;.format(resource, start, end), index=False)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Collect Fitbit &#39;activities&#39;, &#39;summary&#39; and &#39;steps&#39; data since October 1st, 2019
+get_fitbit_data(date_range=date_range)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;2-cleaning-the-data&#34;&gt;2. Cleaning the data&lt;/h2&gt;
+&lt;p&gt;It&amp;rsquo;s time to take a look at each dataset.&lt;/p&gt;
+&lt;h3 id=&#34;21-the-activity-dataset&#34;&gt;2.1. The activity dataset&lt;/h3&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities = pd.read_csv(&amp;quot;./data/raw/activities_2019-10-01_to_2020-05-18.csv&amp;quot;)
+activities.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;activityId&lt;/th&gt;
+      &lt;th&gt;activityParentId&lt;/th&gt;
+      &lt;th&gt;activityParentName&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;duration&lt;/th&gt;
+      &lt;th&gt;hasStartTime&lt;/th&gt;
+      &lt;th&gt;isFavorite&lt;/th&gt;
+      &lt;th&gt;lastModified&lt;/th&gt;
+      &lt;th&gt;logId&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;startDate&lt;/th&gt;
+      &lt;th&gt;startTime&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+      &lt;th&gt;distance&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;90013.0&lt;/td&gt;
+      &lt;td&gt;90013.0&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;1843000.0&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+      &lt;td&gt;False&lt;/td&gt;
+      &lt;td&gt;2019-10-01T15:36:45.000Z&lt;/td&gt;
+      &lt;td&gt;2.568779e+10&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;10:46&lt;/td&gt;
+      &lt;td&gt;2059.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;90013.0&lt;/td&gt;
+      &lt;td&gt;90013.0&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;194.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;1792000.0&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+      &lt;td&gt;False&lt;/td&gt;
+      &lt;td&gt;2019-10-01T17:44:08.000Z&lt;/td&gt;
+      &lt;td&gt;2.569041e+10&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;11:52&lt;/td&gt;
+      &lt;td&gt;1977.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;90013.0&lt;/td&gt;
+      &lt;td&gt;90013.0&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;165.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;1485000.0&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+      &lt;td&gt;False&lt;/td&gt;
+      &lt;td&gt;2019-10-02T02:00:43.000Z&lt;/td&gt;
+      &lt;td&gt;2.570412e+10&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;18:20&lt;/td&gt;
+      &lt;td&gt;1443.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.shape
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;(354, 16)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We have 16 columns, many of which contain logging information, True/False data or duplicate information which is not useful to us. Let&amp;rsquo;s drop these.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;drop_columns = [&#39;activityId&#39;, &#39;activityParentId&#39;, &#39;activityParentName&#39;, &#39;hasStartTime&#39;, 
+                &#39;isFavorite&#39;, &#39;lastModified&#39;, &#39;logId&#39;, &#39;startDate&#39;]
+
+activities.drop(drop_columns, axis=1, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next, let&amp;rsquo;s look at the distance column. Consulting the documentation, we see that this means logged distance. Since I&amp;rsquo;ve rarely used the feature, it looks like the column consists mostly of missing values.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.distance.value_counts()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;0.310468    1
+0.773283    1
+Name: distance, dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Since we only have 2 non-missing values in 354 rows, let&amp;rsquo;s drop the column.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.drop(&#39;distance&#39;, axis=1, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Some of the column names are in camelCase. Let&amp;rsquo;s rename them to Python&amp;rsquo;s favored snake_case.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.rename(columns={&#39;startTime&#39;: &#39;start_time&#39;}, inplace=True)
+activities.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;duration&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;start_time&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;1843000.0&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;10:46&lt;/td&gt;
+      &lt;td&gt;2059.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;194.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;1792000.0&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;11:52&lt;/td&gt;
+      &lt;td&gt;1977.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;165.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;1485000.0&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;18:20&lt;/td&gt;
+      &lt;td&gt;1443.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;The duration column isn&amp;rsquo;t easy to parse and is missing units. The Fitbit api 
+&lt;a href=&#34;https://dev.fitbit.com/build/reference/web-api/activity/#activity-logging&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;documentation&lt;/a&gt; lists the duration as being in millisecond, so let&amp;rsquo;s put it in minutes and rename accordingly.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;activities.duration = activities.duration.apply(lambda x: round(x/60000))
+activities.rename(columns={&#39;duration&#39;: &#39;duration_min&#39;}, inplace=True)
+
+activities.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;duration_min&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;start_time&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;31&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;10:46&lt;/td&gt;
+      &lt;td&gt;2059.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;194.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;30&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;11:52&lt;/td&gt;
+      &lt;td&gt;1977.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;165.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;25&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;18:20&lt;/td&gt;
+      &lt;td&gt;1443.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;To help with analysis, let&amp;rsquo;s format the start_time column as &amp;ldquo;YYYY-MM-DD H:M:S&amp;rdquo; to more easily convert to a datetime object. Since we have the activity duration, we can also add an end_time column.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Format start_time column and convert to datetime object
+activities.start_time = activities.date + &amp;quot; &amp;quot; + activities.start_time + &amp;quot;:00&amp;quot;
+activities.start_time = pd.to_datetime(activities.start_time)
+
+# Create end_time column by adding the duration_min column to start_time
+activities_duration = activities.duration_min.apply(lambda x: timedelta(minutes=x))
+activities[&#39;end_time&#39;] = activities.start_time + activities_duration
+
+# Display result
+activities.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;duration_min&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;start_time&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+      &lt;th&gt;end_time&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;31&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2019-10-01 10:46:00&lt;/td&gt;
+      &lt;td&gt;2059.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;2019-10-01 11:17:00&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;194.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;30&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2019-10-01 11:52:00&lt;/td&gt;
+      &lt;td&gt;1977.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;2019-10-01 12:22:00&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;165.0&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;25&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;2019-10-01 18:20:00&lt;/td&gt;
+      &lt;td&gt;1443.0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;2019-10-01 18:45:00&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;Finally, let&amp;rsquo;s reorder the columns for readability.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Reorder columns
+column_order = [&#39;date&#39;, &#39;name&#39;, &#39;description&#39;, &#39;start_time&#39;, &#39;end_time&#39;, &#39;duration_min&#39;, &#39;steps&#39;, &#39;calories&#39;]
+activities = activities[column_order]
+
+# Store dataset
+start, end = date_range[0], date_range[-1]
+activities.to_csv(&amp;quot;./data/tidy/activities_{}_to_{}.csv&amp;quot;.format(start, end), index=False)
+
+# Look at end result
+activities
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;start_time&lt;/th&gt;
+      &lt;th&gt;end_time&lt;/th&gt;
+      &lt;th&gt;duration_min&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 10:46:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 11:17:00&lt;/td&gt;
+      &lt;td&gt;31&lt;/td&gt;
+      &lt;td&gt;2059.0&lt;/td&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 11:52:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 12:22:00&lt;/td&gt;
+      &lt;td&gt;30&lt;/td&gt;
+      &lt;td&gt;1977.0&lt;/td&gt;
+      &lt;td&gt;194.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 18:20:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 18:45:00&lt;/td&gt;
+      &lt;td&gt;25&lt;/td&gt;
+      &lt;td&gt;1443.0&lt;/td&gt;
+      &lt;td&gt;165.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 19:38:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 20:05:00&lt;/td&gt;
+      &lt;td&gt;27&lt;/td&gt;
+      &lt;td&gt;1624.0&lt;/td&gt;
+      &lt;td&gt;176.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;2019-10-02&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-02 13:38:00&lt;/td&gt;
+      &lt;td&gt;2019-10-02 15:20:00&lt;/td&gt;
+      &lt;td&gt;102&lt;/td&gt;
+      &lt;td&gt;7035.0&lt;/td&gt;
+      &lt;td&gt;552.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;349&lt;/th&gt;
+      &lt;td&gt;2020-05-14&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2020-05-14 08:22:00&lt;/td&gt;
+      &lt;td&gt;2020-05-14 09:07:00&lt;/td&gt;
+      &lt;td&gt;45&lt;/td&gt;
+      &lt;td&gt;4394.0&lt;/td&gt;
+      &lt;td&gt;361.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;350&lt;/th&gt;
+      &lt;td&gt;2020-05-15&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2020-05-15 12:23:00&lt;/td&gt;
+      &lt;td&gt;2020-05-15 13:59:00&lt;/td&gt;
+      &lt;td&gt;96&lt;/td&gt;
+      &lt;td&gt;9430.0&lt;/td&gt;
+      &lt;td&gt;658.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;351&lt;/th&gt;
+      &lt;td&gt;2020-05-15&lt;/td&gt;
+      &lt;td&gt;Run&lt;/td&gt;
+      &lt;td&gt;Running - 5 mph (12 min/mile)&lt;/td&gt;
+      &lt;td&gt;2020-05-15 20:13:00&lt;/td&gt;
+      &lt;td&gt;2020-05-15 20:34:00&lt;/td&gt;
+      &lt;td&gt;21&lt;/td&gt;
+      &lt;td&gt;2865.0&lt;/td&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;352&lt;/th&gt;
+      &lt;td&gt;2020-05-16&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2020-05-16 10:29:00&lt;/td&gt;
+      &lt;td&gt;2020-05-16 12:33:00&lt;/td&gt;
+      &lt;td&gt;124&lt;/td&gt;
+      &lt;td&gt;10487.0&lt;/td&gt;
+      &lt;td&gt;855.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;353&lt;/th&gt;
+      &lt;td&gt;2020-05-17&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2020-05-17 11:11:00&lt;/td&gt;
+      &lt;td&gt;2020-05-17 13:15:00&lt;/td&gt;
+      &lt;td&gt;124&lt;/td&gt;
+      &lt;td&gt;10757.0&lt;/td&gt;
+      &lt;td&gt;835.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;354 rows × 8 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;22-the-summary-dataset&#34;&gt;2.2. The summary dataset&lt;/h3&gt;
+&lt;p&gt;Now let&amp;rsquo;s take a look at the second dataset.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;summary = pd.read_csv(&amp;quot;./data/raw/summary_2019-10-01_to_2020-05-18.csv&amp;quot;)
+summary
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;activeScore&lt;/th&gt;
+      &lt;th&gt;activityCalories&lt;/th&gt;
+      &lt;th&gt;caloriesBMR&lt;/th&gt;
+      &lt;th&gt;caloriesOut&lt;/th&gt;
+      &lt;th&gt;fairlyActiveMinutes&lt;/th&gt;
+      &lt;th&gt;lightlyActiveMinutes&lt;/th&gt;
+      &lt;th&gt;marginalCalories&lt;/th&gt;
+      &lt;th&gt;restingHeartRate&lt;/th&gt;
+      &lt;th&gt;sedentaryMinutes&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;veryActiveMinutes&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;4097&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;5018&lt;/td&gt;
+      &lt;td&gt;165&lt;/td&gt;
+      &lt;td&gt;420&lt;/td&gt;
+      &lt;td&gt;2670&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+      &lt;td&gt;209&lt;/td&gt;
+      &lt;td&gt;25576&lt;/td&gt;
+      &lt;td&gt;152&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1967&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;3211&lt;/td&gt;
+      &lt;td&gt;27&lt;/td&gt;
+      &lt;td&gt;360&lt;/td&gt;
+      &lt;td&gt;1145&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+      &lt;td&gt;379&lt;/td&gt;
+      &lt;td&gt;16471&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;2019-10-02&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1540&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;2923&lt;/td&gt;
+      &lt;td&gt;22&lt;/td&gt;
+      &lt;td&gt;251&lt;/td&gt;
+      &lt;td&gt;920&lt;/td&gt;
+      &lt;td&gt;57&lt;/td&gt;
+      &lt;td&gt;674&lt;/td&gt;
+      &lt;td&gt;13510&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;2019-10-03&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1470&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;2883&lt;/td&gt;
+      &lt;td&gt;44&lt;/td&gt;
+      &lt;td&gt;163&lt;/td&gt;
+      &lt;td&gt;940&lt;/td&gt;
+      &lt;td&gt;56&lt;/td&gt;
+      &lt;td&gt;659&lt;/td&gt;
+      &lt;td&gt;11443&lt;/td&gt;
+      &lt;td&gt;65&lt;/td&gt;
+      &lt;td&gt;2019-10-04&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1776&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;3136&lt;/td&gt;
+      &lt;td&gt;35&lt;/td&gt;
+      &lt;td&gt;178&lt;/td&gt;
+      &lt;td&gt;1110&lt;/td&gt;
+      &lt;td&gt;56&lt;/td&gt;
+      &lt;td&gt;572&lt;/td&gt;
+      &lt;td&gt;18711&lt;/td&gt;
+      &lt;td&gt;120&lt;/td&gt;
+      &lt;td&gt;2019-10-05&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;226&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1179&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;2614&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;218&lt;/td&gt;
+      &lt;td&gt;680&lt;/td&gt;
+      &lt;td&gt;57&lt;/td&gt;
+      &lt;td&gt;636&lt;/td&gt;
+      &lt;td&gt;8938&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;2020-05-14&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;227&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1589&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;2988&lt;/td&gt;
+      &lt;td&gt;19&lt;/td&gt;
+      &lt;td&gt;183&lt;/td&gt;
+      &lt;td&gt;1011&lt;/td&gt;
+      &lt;td&gt;56&lt;/td&gt;
+      &lt;td&gt;565&lt;/td&gt;
+      &lt;td&gt;15358&lt;/td&gt;
+      &lt;td&gt;99&lt;/td&gt;
+      &lt;td&gt;2020-05-15&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;228&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1512&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;2903&lt;/td&gt;
+      &lt;td&gt;44&lt;/td&gt;
+      &lt;td&gt;160&lt;/td&gt;
+      &lt;td&gt;959&lt;/td&gt;
+      &lt;td&gt;55&lt;/td&gt;
+      &lt;td&gt;614&lt;/td&gt;
+      &lt;td&gt;15115&lt;/td&gt;
+      &lt;td&gt;82&lt;/td&gt;
+      &lt;td&gt;2020-05-16&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;229&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;1922&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;3230&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;224&lt;/td&gt;
+      &lt;td&gt;1215&lt;/td&gt;
+      &lt;td&gt;55&lt;/td&gt;
+      &lt;td&gt;399&lt;/td&gt;
+      &lt;td&gt;18880&lt;/td&gt;
+      &lt;td&gt;100&lt;/td&gt;
+      &lt;td&gt;2020-05-17&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;230&lt;/th&gt;
+      &lt;td&gt;-1&lt;/td&gt;
+      &lt;td&gt;468&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;2046&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;116&lt;/td&gt;
+      &lt;td&gt;235&lt;/td&gt;
+      &lt;td&gt;54&lt;/td&gt;
+      &lt;td&gt;713&lt;/td&gt;
+      &lt;td&gt;2341&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;231 rows × 12 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Now, the activeScore column is added by the python-fitbit wrapper to the Fitbit API. All values are -1 in our dataset so there&amp;rsquo;s not much loss of information in dropping the column.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;(summary.activeScore == -1).all()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;True
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;summary.drop(&#39;activeScore&#39;, axis=1, inplace=True)
+summary.head(2)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;activityCalories&lt;/th&gt;
+      &lt;th&gt;caloriesBMR&lt;/th&gt;
+      &lt;th&gt;caloriesOut&lt;/th&gt;
+      &lt;th&gt;fairlyActiveMinutes&lt;/th&gt;
+      &lt;th&gt;lightlyActiveMinutes&lt;/th&gt;
+      &lt;th&gt;marginalCalories&lt;/th&gt;
+      &lt;th&gt;restingHeartRate&lt;/th&gt;
+      &lt;th&gt;sedentaryMinutes&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;veryActiveMinutes&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;4097&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;5018&lt;/td&gt;
+      &lt;td&gt;165&lt;/td&gt;
+      &lt;td&gt;420&lt;/td&gt;
+      &lt;td&gt;2670&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+      &lt;td&gt;209&lt;/td&gt;
+      &lt;td&gt;25576&lt;/td&gt;
+      &lt;td&gt;152&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;1967&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;3211&lt;/td&gt;
+      &lt;td&gt;27&lt;/td&gt;
+      &lt;td&gt;360&lt;/td&gt;
+      &lt;td&gt;1145&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+      &lt;td&gt;379&lt;/td&gt;
+      &lt;td&gt;16471&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;2019-10-02&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;Next, we again format all columns to snake_case and reorder for readability.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Rename columns to snake_case
+columns_map = {
+    &#39;activityCalories&#39;: &#39;activity_calories&#39;,
+    &#39;caloriesBMR&#39;: &#39;calories_BMR&#39;,
+    &#39;caloriesOut&#39;: &#39;calories_out&#39;,
+    &#39;fairlyActiveMinutes&#39;: &#39;fairly_active_minutes&#39;,
+    &#39;lightlyActiveMinutes&#39;: &#39;lightly_active_minutes&#39;,
+    &#39;marginalCalories&#39;: &#39;marginal_calories&#39;,
+    &#39;restingHeartRate&#39;: &#39;resting_heart_rate&#39;,
+    &#39;sedentaryMinutes&#39;: &#39;sedentary_minutes&#39;,
+    &#39;veryActiveMinutes&#39;: &#39;very_active_minutes&#39;
+}
+
+summary.rename(columns=columns_map, inplace=True)
+
+# Reorder columns
+column_order = [&#39;date&#39;, &#39;steps&#39;, &#39;very_active_minutes&#39;, &#39;fairly_active_minutes&#39;, &#39;lightly_active_minutes&#39;, 
+                &#39;sedentary_minutes&#39;, &#39;activity_calories&#39;, &#39;marginal_calories&#39;, &#39;calories_out&#39;, &#39;calories_BMR&#39;,
+                &#39;resting_heart_rate&#39;]
+
+summary = summary[column_order]
+
+# Store dataset
+start, end = summary.date[0], summary.date[len(summary.index)-1]
+summary.to_csv(&amp;quot;./data/tidy/summary_{}_to_{}.csv&amp;quot;.format(start, end), index=False)
+
+# Look at result
+summary.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;very_active_minutes&lt;/th&gt;
+      &lt;th&gt;fairly_active_minutes&lt;/th&gt;
+      &lt;th&gt;lightly_active_minutes&lt;/th&gt;
+      &lt;th&gt;sedentary_minutes&lt;/th&gt;
+      &lt;th&gt;activity_calories&lt;/th&gt;
+      &lt;th&gt;marginal_calories&lt;/th&gt;
+      &lt;th&gt;calories_out&lt;/th&gt;
+      &lt;th&gt;calories_BMR&lt;/th&gt;
+      &lt;th&gt;resting_heart_rate&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;25576&lt;/td&gt;
+      &lt;td&gt;152&lt;/td&gt;
+      &lt;td&gt;165&lt;/td&gt;
+      &lt;td&gt;420&lt;/td&gt;
+      &lt;td&gt;209&lt;/td&gt;
+      &lt;td&gt;4097&lt;/td&gt;
+      &lt;td&gt;2670&lt;/td&gt;
+      &lt;td&gt;5018&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-02&lt;/td&gt;
+      &lt;td&gt;16471&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;27&lt;/td&gt;
+      &lt;td&gt;360&lt;/td&gt;
+      &lt;td&gt;379&lt;/td&gt;
+      &lt;td&gt;1967&lt;/td&gt;
+      &lt;td&gt;1145&lt;/td&gt;
+      &lt;td&gt;3211&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-03&lt;/td&gt;
+      &lt;td&gt;13510&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;22&lt;/td&gt;
+      &lt;td&gt;251&lt;/td&gt;
+      &lt;td&gt;674&lt;/td&gt;
+      &lt;td&gt;1540&lt;/td&gt;
+      &lt;td&gt;920&lt;/td&gt;
+      &lt;td&gt;2923&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;57&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;23-the-steps-dataset&#34;&gt;2.3. The steps dataset&lt;/h3&gt;
+&lt;p&gt;Finally, we look at the intraday steps dataset.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;steps = pd.read_csv(&amp;quot;./data/raw/steps_2019-10-01_to_2020-05-18.csv&amp;quot;)
+steps
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;time&lt;/th&gt;
+      &lt;th&gt;value&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;00:00:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;00:01:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;00:02:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;00:03:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;00:04:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332635&lt;/th&gt;
+      &lt;td&gt;23:55:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332636&lt;/th&gt;
+      &lt;td&gt;23:56:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332637&lt;/th&gt;
+      &lt;td&gt;23:57:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332638&lt;/th&gt;
+      &lt;td&gt;23:58:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332639&lt;/th&gt;
+      &lt;td&gt;23:59:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;332640 rows × 3 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;We can combine the time and date into a single column, in datetime format. We also rename value to the more descriptive &amp;lsquo;stepcount&amp;rsquo;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Combine date and time
+steps.time = steps.date + &amp;quot; &amp;quot; + steps.time
+
+# Rename value to stepcount
+steps.rename(columns={&#39;value&#39;: &#39;stepcount&#39;}, inplace=True)
+
+# Get endpoint dates to store the file
+start, end = steps.date[0], steps.date[len(steps.index) - 1]
+
+# Drop date column and store
+steps.drop(&#39;date&#39;, axis=1, inplace=True)
+steps.to_csv(&amp;quot;./data/tidy/steps_{}_to_{}.csv&amp;quot;.format(start, end), index=False)
+
+# Look at end result
+steps
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;time&lt;/th&gt;
+      &lt;th&gt;stepcount&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:00:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:01:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:02:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:03:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:04:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332635&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:55:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332636&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:56:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332637&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:57:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332638&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:58:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332639&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:59:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;332640 rows × 2 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h2 id=&#34;3-visualisations&#34;&gt;3. Visualisations&lt;/h2&gt;
+&lt;p&gt;We now have clean datasets to explore further. We take a look at visualisations in 
+&lt;a href=&#34;https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Part II&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Fitbit Data Exploration Part II</title>
+      <link>https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/</link>
+      <pubDate>Mon, 18 May 2020 00:00:00 +0000</pubDate>
+      <guid>https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/</guid>
+      <description>&lt;p&gt;In 
+&lt;a href=&#34;https://vgelinas.github.io/post/fitbit-data-exploration-part-i/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Part I&lt;/a&gt; we showed how to connect to the Fitbit API via Python, and we built some datasets consisting of activities and intraday steps data from October to today. In this post we walk through some data visualisations, and will take a look in particular at the intraday steps data.&lt;/p&gt;
+&lt;h3 id=&#34;31-activity-statistics-per-week-day&#34;&gt;3.1. Activity statistics per week day&lt;/h3&gt;
+&lt;p&gt;Let&amp;rsquo;s compile some statistics based on day of the week. First, let&amp;rsquo;s take a look at summary data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Use parse_dates to interpret our date column as datetime objects
+summary = pd.read_csv(&amp;quot;./data/tidy/summary_2019-10-01_to_2020-05-18.csv&amp;quot;, parse_dates=[&#39;date&#39;])
+summary
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;very_active_minutes&lt;/th&gt;
+      &lt;th&gt;fairly_active_minutes&lt;/th&gt;
+      &lt;th&gt;lightly_active_minutes&lt;/th&gt;
+      &lt;th&gt;sedentary_minutes&lt;/th&gt;
+      &lt;th&gt;activity_calories&lt;/th&gt;
+      &lt;th&gt;marginal_calories&lt;/th&gt;
+      &lt;th&gt;calories_out&lt;/th&gt;
+      &lt;th&gt;calories_BMR&lt;/th&gt;
+      &lt;th&gt;resting_heart_rate&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;25576&lt;/td&gt;
+      &lt;td&gt;152&lt;/td&gt;
+      &lt;td&gt;165&lt;/td&gt;
+      &lt;td&gt;420&lt;/td&gt;
+      &lt;td&gt;209&lt;/td&gt;
+      &lt;td&gt;4097&lt;/td&gt;
+      &lt;td&gt;2670&lt;/td&gt;
+      &lt;td&gt;5018&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-02&lt;/td&gt;
+      &lt;td&gt;16471&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;27&lt;/td&gt;
+      &lt;td&gt;360&lt;/td&gt;
+      &lt;td&gt;379&lt;/td&gt;
+      &lt;td&gt;1967&lt;/td&gt;
+      &lt;td&gt;1145&lt;/td&gt;
+      &lt;td&gt;3211&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;58&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-03&lt;/td&gt;
+      &lt;td&gt;13510&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;22&lt;/td&gt;
+      &lt;td&gt;251&lt;/td&gt;
+      &lt;td&gt;674&lt;/td&gt;
+      &lt;td&gt;1540&lt;/td&gt;
+      &lt;td&gt;920&lt;/td&gt;
+      &lt;td&gt;2923&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;57&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;2019-10-04&lt;/td&gt;
+      &lt;td&gt;11443&lt;/td&gt;
+      &lt;td&gt;65&lt;/td&gt;
+      &lt;td&gt;44&lt;/td&gt;
+      &lt;td&gt;163&lt;/td&gt;
+      &lt;td&gt;659&lt;/td&gt;
+      &lt;td&gt;1470&lt;/td&gt;
+      &lt;td&gt;940&lt;/td&gt;
+      &lt;td&gt;2883&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;56&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;2019-10-05&lt;/td&gt;
+      &lt;td&gt;18711&lt;/td&gt;
+      &lt;td&gt;120&lt;/td&gt;
+      &lt;td&gt;35&lt;/td&gt;
+      &lt;td&gt;178&lt;/td&gt;
+      &lt;td&gt;572&lt;/td&gt;
+      &lt;td&gt;1776&lt;/td&gt;
+      &lt;td&gt;1110&lt;/td&gt;
+      &lt;td&gt;3136&lt;/td&gt;
+      &lt;td&gt;1663&lt;/td&gt;
+      &lt;td&gt;56&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;226&lt;/th&gt;
+      &lt;td&gt;2020-05-14&lt;/td&gt;
+      &lt;td&gt;8938&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;218&lt;/td&gt;
+      &lt;td&gt;636&lt;/td&gt;
+      &lt;td&gt;1179&lt;/td&gt;
+      &lt;td&gt;680&lt;/td&gt;
+      &lt;td&gt;2614&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;57&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;227&lt;/th&gt;
+      &lt;td&gt;2020-05-15&lt;/td&gt;
+      &lt;td&gt;15358&lt;/td&gt;
+      &lt;td&gt;99&lt;/td&gt;
+      &lt;td&gt;19&lt;/td&gt;
+      &lt;td&gt;183&lt;/td&gt;
+      &lt;td&gt;565&lt;/td&gt;
+      &lt;td&gt;1589&lt;/td&gt;
+      &lt;td&gt;1011&lt;/td&gt;
+      &lt;td&gt;2988&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;56&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;228&lt;/th&gt;
+      &lt;td&gt;2020-05-16&lt;/td&gt;
+      &lt;td&gt;15115&lt;/td&gt;
+      &lt;td&gt;82&lt;/td&gt;
+      &lt;td&gt;44&lt;/td&gt;
+      &lt;td&gt;160&lt;/td&gt;
+      &lt;td&gt;614&lt;/td&gt;
+      &lt;td&gt;1512&lt;/td&gt;
+      &lt;td&gt;959&lt;/td&gt;
+      &lt;td&gt;2903&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;55&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;229&lt;/th&gt;
+      &lt;td&gt;2020-05-17&lt;/td&gt;
+      &lt;td&gt;18880&lt;/td&gt;
+      &lt;td&gt;100&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;224&lt;/td&gt;
+      &lt;td&gt;399&lt;/td&gt;
+      &lt;td&gt;1922&lt;/td&gt;
+      &lt;td&gt;1215&lt;/td&gt;
+      &lt;td&gt;3230&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;55&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;230&lt;/th&gt;
+      &lt;td&gt;2020-05-18&lt;/td&gt;
+      &lt;td&gt;2341&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;8&lt;/td&gt;
+      &lt;td&gt;116&lt;/td&gt;
+      &lt;td&gt;713&lt;/td&gt;
+      &lt;td&gt;468&lt;/td&gt;
+      &lt;td&gt;235&lt;/td&gt;
+      &lt;td&gt;2046&lt;/td&gt;
+      &lt;td&gt;1659&lt;/td&gt;
+      &lt;td&gt;54&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;231 rows × 11 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;We can use strftime to convert the date to a week day, and get group statistics per day of the week.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Add a weekday column
+summary[&#39;weekday&#39;] = summary.date.apply(lambda x: datetime.strftime(x, &amp;quot;%A&amp;quot;))
+
+# Get statistics per day of the week
+weekly_statistics = summary.groupby(&#39;weekday&#39;).describe()
+
+# Row indices are days of the week, put them in order
+row_order = [&#39;Monday&#39;, &#39;Tuesday&#39;, &#39;Wednesday&#39;, &#39;Thursday&#39;, &#39;Friday&#39;, &#39;Saturday&#39;, &#39;Sunday&#39;]
+weekly_statistics = weekly_statistics.loc[row_order, :]
+
+# Show results
+weekly_statistics
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead tr th {
+    text-align: left;
+}
+
+.dataframe thead tr:last-of-type th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th colspan=&#34;8&#34; halign=&#34;left&#34;&gt;steps&lt;/th&gt;
+      &lt;th colspan=&#34;2&#34; halign=&#34;left&#34;&gt;very_active_minutes&lt;/th&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;th colspan=&#34;2&#34; halign=&#34;left&#34;&gt;calories_BMR&lt;/th&gt;
+      &lt;th colspan=&#34;8&#34; halign=&#34;left&#34;&gt;resting_heart_rate&lt;/th&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;count&lt;/th&gt;
+      &lt;th&gt;mean&lt;/th&gt;
+      &lt;th&gt;std&lt;/th&gt;
+      &lt;th&gt;min&lt;/th&gt;
+      &lt;th&gt;25%&lt;/th&gt;
+      &lt;th&gt;50%&lt;/th&gt;
+      &lt;th&gt;75%&lt;/th&gt;
+      &lt;th&gt;max&lt;/th&gt;
+      &lt;th&gt;count&lt;/th&gt;
+      &lt;th&gt;mean&lt;/th&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;th&gt;75%&lt;/th&gt;
+      &lt;th&gt;max&lt;/th&gt;
+      &lt;th&gt;count&lt;/th&gt;
+      &lt;th&gt;mean&lt;/th&gt;
+      &lt;th&gt;std&lt;/th&gt;
+      &lt;th&gt;min&lt;/th&gt;
+      &lt;th&gt;25%&lt;/th&gt;
+      &lt;th&gt;50%&lt;/th&gt;
+      &lt;th&gt;75%&lt;/th&gt;
+      &lt;th&gt;max&lt;/th&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;weekday&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Monday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;10817.393939&lt;/td&gt;
+      &lt;td&gt;4075.727205&lt;/td&gt;
+      &lt;td&gt;2341.0&lt;/td&gt;
+      &lt;td&gt;7793.0&lt;/td&gt;
+      &lt;td&gt;11663.0&lt;/td&gt;
+      &lt;td&gt;13248.0&lt;/td&gt;
+      &lt;td&gt;17668.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;50.848485&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.030303&lt;/td&gt;
+      &lt;td&gt;1.610218&lt;/td&gt;
+      &lt;td&gt;53.0&lt;/td&gt;
+      &lt;td&gt;54.0&lt;/td&gt;
+      &lt;td&gt;55.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;59.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Tuesday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;11202.878788&lt;/td&gt;
+      &lt;td&gt;4575.416680&lt;/td&gt;
+      &lt;td&gt;3250.0&lt;/td&gt;
+      &lt;td&gt;8211.0&lt;/td&gt;
+      &lt;td&gt;10953.0&lt;/td&gt;
+      &lt;td&gt;12994.0&lt;/td&gt;
+      &lt;td&gt;25576.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;57.666667&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.030303&lt;/td&gt;
+      &lt;td&gt;1.878910&lt;/td&gt;
+      &lt;td&gt;52.0&lt;/td&gt;
+      &lt;td&gt;53.0&lt;/td&gt;
+      &lt;td&gt;55.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;59.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Wednesday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;11007.939394&lt;/td&gt;
+      &lt;td&gt;3307.219952&lt;/td&gt;
+      &lt;td&gt;4486.0&lt;/td&gt;
+      &lt;td&gt;9083.0&lt;/td&gt;
+      &lt;td&gt;10795.0&lt;/td&gt;
+      &lt;td&gt;13538.0&lt;/td&gt;
+      &lt;td&gt;18402.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;53.909091&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.303030&lt;/td&gt;
+      &lt;td&gt;1.704495&lt;/td&gt;
+      &lt;td&gt;52.0&lt;/td&gt;
+      &lt;td&gt;54.0&lt;/td&gt;
+      &lt;td&gt;55.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;58.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Thursday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;10867.212121&lt;/td&gt;
+      &lt;td&gt;2882.811852&lt;/td&gt;
+      &lt;td&gt;4525.0&lt;/td&gt;
+      &lt;td&gt;8938.0&lt;/td&gt;
+      &lt;td&gt;10856.0&lt;/td&gt;
+      &lt;td&gt;13064.0&lt;/td&gt;
+      &lt;td&gt;16621.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;54.212121&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.424242&lt;/td&gt;
+      &lt;td&gt;1.581738&lt;/td&gt;
+      &lt;td&gt;52.0&lt;/td&gt;
+      &lt;td&gt;54.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;59.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Friday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;12526.757576&lt;/td&gt;
+      &lt;td&gt;4179.309722&lt;/td&gt;
+      &lt;td&gt;2028.0&lt;/td&gt;
+      &lt;td&gt;9887.0&lt;/td&gt;
+      &lt;td&gt;12445.0&lt;/td&gt;
+      &lt;td&gt;15358.0&lt;/td&gt;
+      &lt;td&gt;18958.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;66.454545&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.424242&lt;/td&gt;
+      &lt;td&gt;1.581738&lt;/td&gt;
+      &lt;td&gt;52.0&lt;/td&gt;
+      &lt;td&gt;54.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;59.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Saturday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;14507.181818&lt;/td&gt;
+      &lt;td&gt;4188.612206&lt;/td&gt;
+      &lt;td&gt;6315.0&lt;/td&gt;
+      &lt;td&gt;12446.0&lt;/td&gt;
+      &lt;td&gt;15049.0&lt;/td&gt;
+      &lt;td&gt;16924.0&lt;/td&gt;
+      &lt;td&gt;23152.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;74.151515&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.575758&lt;/td&gt;
+      &lt;td&gt;1.581738&lt;/td&gt;
+      &lt;td&gt;53.0&lt;/td&gt;
+      &lt;td&gt;55.0&lt;/td&gt;
+      &lt;td&gt;55.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;60.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Sunday&lt;/th&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;12488.121212&lt;/td&gt;
+      &lt;td&gt;4849.136191&lt;/td&gt;
+      &lt;td&gt;4560.0&lt;/td&gt;
+      &lt;td&gt;9659.0&lt;/td&gt;
+      &lt;td&gt;11756.0&lt;/td&gt;
+      &lt;td&gt;15944.0&lt;/td&gt;
+      &lt;td&gt;25193.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;64.636364&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;1663.0&lt;/td&gt;
+      &lt;td&gt;33.0&lt;/td&gt;
+      &lt;td&gt;55.393939&lt;/td&gt;
+      &lt;td&gt;1.456438&lt;/td&gt;
+      &lt;td&gt;53.0&lt;/td&gt;
+      &lt;td&gt;54.0&lt;/td&gt;
+      &lt;td&gt;55.0&lt;/td&gt;
+      &lt;td&gt;56.0&lt;/td&gt;
+      &lt;td&gt;59.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;7 rows × 80 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Plot the mean and first quartile for number of steps per weekday
+mean_steps = weekly_statistics.steps[[&#39;mean&#39;, &#39;25%&#39;]]
+mean_steps.plot(kind=&#39;bar&#39;)
+
+plt.title(&#39;Weekly stepcount since October 1st, 2019&#39;)
+plt.ylabel(&#39;steps&#39;)
+plt.ylim([0, 18000])
+plt.show()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_61_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;h3 id=&#34;32-visualising-walks-over-the-day&#34;&gt;3.2. Visualising walks over the day&lt;/h3&gt;
+&lt;p&gt;Let&amp;rsquo;s now look at the steps intraday data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load in dataset
+steps = pd.read_csv(&amp;quot;./data/tidy/steps_2019-10-01_to_2020-05-18.csv&amp;quot;, parse_dates=[&#39;time&#39;])
+steps
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;time&lt;/th&gt;
+      &lt;th&gt;stepcount&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:00:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:01:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:02:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:03:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:04:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332635&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:55:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332636&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:56:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332637&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:57:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332638&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:58:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332639&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:59:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;332640 rows × 2 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Let&amp;rsquo;s visualise steps intraday data over a given day. We look at May 1st again.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;date = &#39;2020-05-01&#39;
+
+# Restrict to logs for given date
+day_df = steps[steps.time.apply(lambda x: datetime.strftime(x, &amp;quot;%Y-%m-%d&amp;quot;)) == date].copy()
+
+# Restrict to within waking hours
+start_of_day = pd.to_datetime(&#39;2020-05-01 07:00:00&#39;)
+end_of_day = pd.to_datetime(&#39;2020-05-01 23:00:00&#39;)
+day_df = day_df[(day_df.time &amp;gt;= start_of_day)&amp;amp;(day_df.time &amp;lt;= end_of_day)]
+
+# Convert time back to hr:min:sec format and set as index
+day_df.time = day_df.time.apply(lambda x: datetime.strftime(x, &amp;quot;%H:%M:%S&amp;quot;))
+day_df.set_index(&#39;time&#39;, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now let&amp;rsquo;s plot steps during the day on May 1st.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Plot steps on May 1st
+fig, ax = plt.subplots()
+
+day_df.rolling(15).mean().plot(ax=ax)  # 15 min rolling avg to smooth out noise
+ax.set_title(&#39;Steps on May 1st, 2020&#39;)
+ax.set_xlabel(&#39;Time of Day&#39;)
+ax.set_ylabel(&#39;Steps per min&#39;)
+plt.show()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_67_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;Here we can tell which period corresponds to exercise, and which results from general activity, but let&amp;rsquo;s be more systematic about this. We can isolate the steps that result from walks alone and not from general activity. The activity dataset has a start_time and end_time for each activity (walk, run, &amp;hellip;) and we may use these to filter our dataset.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load activities dataset, parsing start_time and end_time columns as datetime objects
+time_col = [&#39;start_time&#39;, &#39;end_time&#39;]
+activities = pd.read_csv(&amp;quot;./data/tidy/activities_2019-10-01_to_2020-05-18.csv&amp;quot;, parse_dates=time_col)
+activities.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;date&lt;/th&gt;
+      &lt;th&gt;name&lt;/th&gt;
+      &lt;th&gt;description&lt;/th&gt;
+      &lt;th&gt;start_time&lt;/th&gt;
+      &lt;th&gt;end_time&lt;/th&gt;
+      &lt;th&gt;duration_min&lt;/th&gt;
+      &lt;th&gt;steps&lt;/th&gt;
+      &lt;th&gt;calories&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 10:46:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 11:17:00&lt;/td&gt;
+      &lt;td&gt;31&lt;/td&gt;
+      &lt;td&gt;2059.0&lt;/td&gt;
+      &lt;td&gt;245.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 11:52:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 12:22:00&lt;/td&gt;
+      &lt;td&gt;30&lt;/td&gt;
+      &lt;td&gt;1977.0&lt;/td&gt;
+      &lt;td&gt;194.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-01&lt;/td&gt;
+      &lt;td&gt;Walk&lt;/td&gt;
+      &lt;td&gt;Walking less than 2 mph, strolling very slowly&lt;/td&gt;
+      &lt;td&gt;2019-10-01 18:20:00&lt;/td&gt;
+      &lt;td&gt;2019-10-01 18:45:00&lt;/td&gt;
+      &lt;td&gt;25&lt;/td&gt;
+      &lt;td&gt;1443.0&lt;/td&gt;
+      &lt;td&gt;165.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;Let&amp;rsquo;s add a column named &amp;lsquo;on_walk&amp;rsquo; to the steps dataset, with a True/False value. For this we cook up a helper function as below:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Helper function to filter the intraday steps data by activity type
+def is_during_activity(t, activity):
+    &amp;quot;&amp;quot;&amp;quot; Takes a datetime object t and activity name
+        Returns True if during activity, else False &amp;quot;&amp;quot;&amp;quot;
+    # Get the activities dataset for that day
+    date = datetime.strftime(t, &amp;quot;%Y-%m-%d&amp;quot;)
+    df = activities[activities.date == date]
+    
+    # Subset to rows which represent activity
+    df = df[df.name == activity]
+    
+    # Check if t is within the bounds of the activity
+    for i in df.index:
+        if df.loc[i, &#39;start_time&#39;] &amp;lt;= t &amp;lt;= df.loc[i, &#39;end_time&#39;]:
+            return True
+    
+    return False
+
+
+# Add &#39;on_walk&#39; column to steps dataframe
+steps[&#39;on_walk&#39;] = steps.time.apply(is_during_activity, args=(&#39;Walk&#39;,))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let&amp;rsquo;s take a look at the stepcount during walks.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;steps[steps.on_walk == True]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;time&lt;/th&gt;
+      &lt;th&gt;stepcount&lt;/th&gt;
+      &lt;th&gt;on_walk&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;646&lt;/th&gt;
+      &lt;td&gt;2019-10-01 10:46:00&lt;/td&gt;
+      &lt;td&gt;54&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;647&lt;/th&gt;
+      &lt;td&gt;2019-10-01 10:47:00&lt;/td&gt;
+      &lt;td&gt;76&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;648&lt;/th&gt;
+      &lt;td&gt;2019-10-01 10:48:00&lt;/td&gt;
+      &lt;td&gt;97&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;649&lt;/th&gt;
+      &lt;td&gt;2019-10-01 10:49:00&lt;/td&gt;
+      &lt;td&gt;75&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;650&lt;/th&gt;
+      &lt;td&gt;2019-10-01 10:50:00&lt;/td&gt;
+      &lt;td&gt;72&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;330551&lt;/th&gt;
+      &lt;td&gt;2020-05-17 13:11:00&lt;/td&gt;
+      &lt;td&gt;113&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;330552&lt;/th&gt;
+      &lt;td&gt;2020-05-17 13:12:00&lt;/td&gt;
+      &lt;td&gt;92&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;330553&lt;/th&gt;
+      &lt;td&gt;2020-05-17 13:13:00&lt;/td&gt;
+      &lt;td&gt;77&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;330554&lt;/th&gt;
+      &lt;td&gt;2020-05-17 13:14:00&lt;/td&gt;
+      &lt;td&gt;35&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;330555&lt;/th&gt;
+      &lt;td&gt;2020-05-17 13:15:00&lt;/td&gt;
+      &lt;td&gt;43&lt;/td&gt;
+      &lt;td&gt;True&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;15007 rows × 3 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Using this, we can create a new dataframe consisting of walks stepcount data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Set all steps outside of walks to zero
+walks = steps.copy()
+walks.stepcount = walks.stepcount.where(walks.on_walk == True, 0)
+    
+# Drop &#39;on_walk&#39; column
+walks.drop(&#39;on_walk&#39;, axis=1, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let&amp;rsquo;s look at May 1st again.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;date = &#39;2020-05-01&#39;
+
+# Restrict to logs for given date
+day_walks = walks[walks.time.apply(lambda x: datetime.strftime(x, &amp;quot;%Y-%m-%d&amp;quot;)) == date].copy()
+
+# Restrict to within waking hours
+start_of_day = pd.to_datetime(&#39;2020-05-01 07:00:00&#39;)
+end_of_day = pd.to_datetime(&#39;2020-05-01 23:00:00&#39;)
+day_walks = day_walks[(day_walks.time &amp;gt;= start_of_day)&amp;amp;(day_walks.time &amp;lt;= end_of_day)]
+
+# Convert time back to hr:min:sec format and set as index
+day_walks.time = day_walks.time.apply(lambda x: datetime.strftime(x, &amp;quot;%H:%M:%S&amp;quot;))
+day_walks.set_index(&#39;time&#39;, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Plot walks on May 1st
+fig, ax = plt.subplots()
+
+day_walks.rolling(15).mean().plot(ax=ax)  # 15 min rolling avg to smooth out noise
+ax.set_title(&#39;Steps on May 1st 2020 during a walk&#39;)
+ax.set_xlabel(&#39;Time of Day&#39;)
+ax.set_ylabel(&#39;Steps per min&#39;)
+
+plt.show()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_78_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;h4 id=&#34;visualise-walk-times-for-each-day-of-the-week&#34;&gt;Visualise walk times for each day of the week.&lt;/h4&gt;
+&lt;p&gt;We can build a picture of the &amp;lsquo;average&amp;rsquo; day over the last 5 months, broken down by day of the week.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Add a weekday column to walks dataset for grouping
+walks[&#39;weekday&#39;] = walks.time.apply(lambda x: datetime.strftime(x, &amp;quot;%A&amp;quot;))
+walks
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;time&lt;/th&gt;
+      &lt;th&gt;stepcount&lt;/th&gt;
+      &lt;th&gt;weekday&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:00:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Tuesday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:01:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Tuesday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:02:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Tuesday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:03:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Tuesday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;2019-10-01 00:04:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Tuesday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332635&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:55:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Monday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332636&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:56:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Monday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332637&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:57:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Monday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332638&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:58:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Monday&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;332639&lt;/th&gt;
+      &lt;td&gt;2020-05-18 23:59:00&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;Monday&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;332640 rows × 3 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;To build our daily picture, let&amp;rsquo;s first group the dataset by day of the week, then average the stepcount for each given minute. This should give us a sense of the distribution of walks on each day.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# change date column to hour:min strings for grouping
+walks.time = walks.time.apply(lambda x: datetime.strftime(x, &amp;quot;%H:%M&amp;quot;))
+
+# for each day of the week, average step count over all dates
+walks_weekday = walks.groupby(&#39;weekday&#39;) 
+
+weekdays = {}
+for day_name, df in walks_weekday:
+    # group by minute, then average over dates
+    df = df.groupby(&#39;time&#39;).mean()
+    weekdays[day_name] = df
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can also get rid of the timestamps during the night, since I&amp;rsquo;m not up for midnight walks too often.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Restrict to waking hours, say 7:00am to 23:59pm
+for day in weekdays:
+    weekdays[day] = weekdays[day].iloc[420:]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now, let&amp;rsquo;s look at the distribution of walks on Mondays.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;weekdays[&#39;Monday&#39;].rolling(15).mean().plot()
+plt.show()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_86_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;Finally, we do this for each day of the week separately.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Plot each day of the week
+days = [&#39;Monday&#39;, &#39;Tuesday&#39;, &#39;Wednesday&#39;, &#39;Thursday&#39;, &#39;Friday&#39;, &#39;Saturday&#39;, &#39;Sunday&#39;]
+
+fig1, axes1 = plt.subplots(1, 5, figsize=(25, 5))
+fig2, axes2 = plt.subplots(1, 2, figsize=(25, 5))
+
+# Plot Monday-Friday first
+for i in range(5):
+    # Take 15min rolling average
+    df = weekdays[days[i]].rolling(15).mean()
+    
+    # Relabel
+    df.rename(columns={&#39;stepcount&#39;: &#39;steps/min&#39;}, inplace=True)
+    
+    # Plot day
+    df.plot(ax=axes1[i])
+    axes1[i].set_title(days[i])
+    axes1[i].set_xlabel(&amp;quot;Time of Day&amp;quot;)
+    
+# Then plot Saturday-Sunday
+for i in range(2):
+    # Take 15 min rolling average
+    df = weekdays[days[5+i]].rolling(15).mean()
+    
+    # Relabel
+    df.rename(columns={&#39;stepcount&#39;: &#39;steps/min&#39;}, inplace=True)
+
+    # Plot day
+    df.plot(ax=axes2[i])
+    axes2[i].set_title(days[5+i])
+    axes2[i].set_xlabel(&amp;quot;Time of Day&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_88_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/fitbit/notebook_88_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
