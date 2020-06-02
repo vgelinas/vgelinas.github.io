@@ -3,22 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://vgelinas.github.io/post/</loc>
+    <lastmod>2020-06-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://vgelinas.github.io/post/predicting-income-from-census-data/</loc>
+    <lastmod>2020-06-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://vgelinas.github.io/</loc>
+    <lastmod>2020-06-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://vgelinas.github.io/post/fitbit-data-exploration-part-i/</loc>
     <lastmod>2020-05-18T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://vgelinas.github.io/post/fitbit-data-exploration-part-ii/</loc>
-    <lastmod>2020-05-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://vgelinas.github.io/post/</loc>
-    <lastmod>2020-05-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://vgelinas.github.io/</loc>
     <lastmod>2020-05-18T00:00:00+00:00</lastmod>
   </url>
   

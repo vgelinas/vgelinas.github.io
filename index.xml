@@ -5,12 +5,1305 @@
     <link>https://vgelinas.github.io/</link>
       <atom:link href="https://vgelinas.github.io/index.xml" rel="self" type="application/rss+xml" />
     <description>Vincent Gélinas</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Mon, 18 May 2020 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Tue, 02 Jun 2020 00:00:00 +0000</lastBuildDate>
     <image>
       <url>https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
       <title>Vincent Gélinas</title>
       <link>https://vgelinas.github.io/</link>
     </image>
+    
+    <item>
+      <title>Predicting Income From Census Data</title>
+      <link>https://vgelinas.github.io/post/predicting-income-from-census-data/</link>
+      <pubDate>Tue, 02 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>https://vgelinas.github.io/post/predicting-income-from-census-data/</guid>
+      <description>&lt;p&gt;In this notebook we run through a basic prediction task using the 
+&lt;a href=&#34;http://archive.ics.uci.edu/ml/datasets/Census&amp;#43;Income&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Census Income UCI Dataset&lt;/a&gt;. The task is to predict whether income exceeds $50k/year based on census data.&lt;/p&gt;
+&lt;h3 id=&#34;dataset-information&#34;&gt;Dataset information&lt;/h3&gt;
+&lt;p&gt;This dataset consists of 48842 instances and 15 features. The features take on a mix of categorical/numerical values:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;age&lt;/strong&gt;: 16+ (continuous).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;workclass&lt;/strong&gt;: Private, Self-emp-not-inc, Self-emp-inc, Federal-gov, Local-gov, State-gov, Without-pay, Never-worked.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;fnlwgt&lt;/strong&gt;: Final weight, see below (continuous).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;education&lt;/strong&gt;: Bachelors, Some-college, 11th, HS-grad, Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;education_num&lt;/strong&gt;: Total number of years of education (continuous).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;marital_status&lt;/strong&gt;: Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;occupation&lt;/strong&gt;: Tech-support, Craft-repair, Other-service, Sales, Exec-managerial, Prof-specialty, Handlers-cleaners, Machine-op-inspct, Adm-clerical, Farming-fishing, Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;relationship&lt;/strong&gt;: Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;race&lt;/strong&gt;: White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other, Black.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;sex&lt;/strong&gt;: Female, Male.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;capital_gain&lt;/strong&gt;: continuous.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;capital_loss&lt;/strong&gt;: continuous.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;hours_per_week&lt;/strong&gt;: Number of hours worked per week (continuous).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;native_country&lt;/strong&gt;: United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&amp;amp;Tobago, Peru, Hong, Holand-Netherlands.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Income&lt;/strong&gt;: &amp;gt;50k, &amp;lt;=50k.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The dataset is already split into train-test sets of sizes (2/3, 1/3). Both sets contain missing values, denoted by &amp;lsquo;?&#39;.&lt;/p&gt;
+&lt;h4 id=&#34;description-of-fnlwgt-final-weight&#34;&gt;Description of fnlwgt (final weight):&lt;/h4&gt;
+&lt;p&gt;The weights on the Current Population Survey (CPS) files are controlled to independent estimates of the civilian noninstitutional population of the US. These are prepared monthly for us by Population Division here at the Census Bureau. We use 3 sets of controls. These are:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;A single cell estimate of the population 16+ for each state.&lt;/li&gt;
+&lt;li&gt;Controls for Hispanic Origin by age and sex.&lt;/li&gt;
+&lt;li&gt;Controls by Race, age and sex.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;dependencies&#34;&gt;Dependencies&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Python 3+&lt;/li&gt;
+&lt;li&gt;Pandas, numpy, scikit-learn&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Standard libraries
+import pandas as pd
+import numpy as np
+
+# Train and evaluate models
+import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import GradientBoostingClassifier
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;1-data-cleaning-and-preprocessing&#34;&gt;1. Data cleaning and preprocessing&lt;/h2&gt;
+&lt;p&gt;To be consistent in cleaning our data, we will merge the train and test sets into a full dataset and separate it later for model validation.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load data
+columns = [&#39;age&#39;, &#39;workclass&#39;, &#39;fnlwgt&#39;, &#39;education&#39;, &#39;education_num&#39;, &#39;marital_status&#39;, &#39;occupation&#39;, 
+           &#39;relationship&#39;, &#39;race&#39;, &#39;sex&#39;, &#39;capital_gain&#39;, &#39;capital_loss&#39;, &#39;hours_per_week&#39;, &#39;native_country&#39;,
+           &#39;income&#39;]
+
+data_train = pd.read_csv(&amp;quot;./data/adult.data&amp;quot;, sep=&#39;, &#39;, header=None, names=columns, engine=&#39;python&#39;)
+data_test = pd.read_csv(&amp;quot;./data/adult.test&amp;quot;, sep=&#39;, &#39;, header=None, skiprows=1, names=columns, engine=&#39;python&#39;)
+
+display(data_train.head(3))
+display(data_test.head(3))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;age&lt;/th&gt;
+      &lt;th&gt;workclass&lt;/th&gt;
+      &lt;th&gt;fnlwgt&lt;/th&gt;
+      &lt;th&gt;education&lt;/th&gt;
+      &lt;th&gt;education_num&lt;/th&gt;
+      &lt;th&gt;marital_status&lt;/th&gt;
+      &lt;th&gt;occupation&lt;/th&gt;
+      &lt;th&gt;relationship&lt;/th&gt;
+      &lt;th&gt;race&lt;/th&gt;
+      &lt;th&gt;sex&lt;/th&gt;
+      &lt;th&gt;capital_gain&lt;/th&gt;
+      &lt;th&gt;capital_loss&lt;/th&gt;
+      &lt;th&gt;hours_per_week&lt;/th&gt;
+      &lt;th&gt;native_country&lt;/th&gt;
+      &lt;th&gt;income&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;39&lt;/td&gt;
+      &lt;td&gt;State-gov&lt;/td&gt;
+      &lt;td&gt;77516&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Never-married&lt;/td&gt;
+      &lt;td&gt;Adm-clerical&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;2174&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;Self-emp-not-inc&lt;/td&gt;
+      &lt;td&gt;83311&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Exec-managerial&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;215646&lt;/td&gt;
+      &lt;td&gt;HS-grad&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Handlers-cleaners&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;age&lt;/th&gt;
+      &lt;th&gt;workclass&lt;/th&gt;
+      &lt;th&gt;fnlwgt&lt;/th&gt;
+      &lt;th&gt;education&lt;/th&gt;
+      &lt;th&gt;education_num&lt;/th&gt;
+      &lt;th&gt;marital_status&lt;/th&gt;
+      &lt;th&gt;occupation&lt;/th&gt;
+      &lt;th&gt;relationship&lt;/th&gt;
+      &lt;th&gt;race&lt;/th&gt;
+      &lt;th&gt;sex&lt;/th&gt;
+      &lt;th&gt;capital_gain&lt;/th&gt;
+      &lt;th&gt;capital_loss&lt;/th&gt;
+      &lt;th&gt;hours_per_week&lt;/th&gt;
+      &lt;th&gt;native_country&lt;/th&gt;
+      &lt;th&gt;income&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;25&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;226802&lt;/td&gt;
+      &lt;td&gt;11th&lt;/td&gt;
+      &lt;td&gt;7&lt;/td&gt;
+      &lt;td&gt;Never-married&lt;/td&gt;
+      &lt;td&gt;Machine-op-inspct&lt;/td&gt;
+      &lt;td&gt;Own-child&lt;/td&gt;
+      &lt;td&gt;Black&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;89814&lt;/td&gt;
+      &lt;td&gt;HS-grad&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Farming-fishing&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;28&lt;/td&gt;
+      &lt;td&gt;Local-gov&lt;/td&gt;
+      &lt;td&gt;336951&lt;/td&gt;
+      &lt;td&gt;Assoc-acdm&lt;/td&gt;
+      &lt;td&gt;12&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Protective-serv&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;gt;50K.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Merge datasets
+data = pd.concat([data_train, data_test])
+data
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;age&lt;/th&gt;
+      &lt;th&gt;workclass&lt;/th&gt;
+      &lt;th&gt;fnlwgt&lt;/th&gt;
+      &lt;th&gt;education&lt;/th&gt;
+      &lt;th&gt;education_num&lt;/th&gt;
+      &lt;th&gt;marital_status&lt;/th&gt;
+      &lt;th&gt;occupation&lt;/th&gt;
+      &lt;th&gt;relationship&lt;/th&gt;
+      &lt;th&gt;race&lt;/th&gt;
+      &lt;th&gt;sex&lt;/th&gt;
+      &lt;th&gt;capital_gain&lt;/th&gt;
+      &lt;th&gt;capital_loss&lt;/th&gt;
+      &lt;th&gt;hours_per_week&lt;/th&gt;
+      &lt;th&gt;native_country&lt;/th&gt;
+      &lt;th&gt;income&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;39&lt;/td&gt;
+      &lt;td&gt;State-gov&lt;/td&gt;
+      &lt;td&gt;77516&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Never-married&lt;/td&gt;
+      &lt;td&gt;Adm-clerical&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;2174&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;Self-emp-not-inc&lt;/td&gt;
+      &lt;td&gt;83311&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Exec-managerial&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;215646&lt;/td&gt;
+      &lt;td&gt;HS-grad&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Handlers-cleaners&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;53&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;234721&lt;/td&gt;
+      &lt;td&gt;11th&lt;/td&gt;
+      &lt;td&gt;7&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Handlers-cleaners&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;Black&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;28&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;338409&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Wife&lt;/td&gt;
+      &lt;td&gt;Black&lt;/td&gt;
+      &lt;td&gt;Female&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;Cuba&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;16276&lt;/th&gt;
+      &lt;td&gt;39&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;215419&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Female&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;36&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;16277&lt;/th&gt;
+      &lt;td&gt;64&lt;/td&gt;
+      &lt;td&gt;?&lt;/td&gt;
+      &lt;td&gt;321403&lt;/td&gt;
+      &lt;td&gt;HS-grad&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;Widowed&lt;/td&gt;
+      &lt;td&gt;?&lt;/td&gt;
+      &lt;td&gt;Other-relative&lt;/td&gt;
+      &lt;td&gt;Black&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;16278&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;374983&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;16279&lt;/th&gt;
+      &lt;td&gt;44&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;83891&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Adm-clerical&lt;/td&gt;
+      &lt;td&gt;Own-child&lt;/td&gt;
+      &lt;td&gt;Asian-Pac-Islander&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;5455&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;lt;=50K.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;16280&lt;/th&gt;
+      &lt;td&gt;35&lt;/td&gt;
+      &lt;td&gt;Self-emp-inc&lt;/td&gt;
+      &lt;td&gt;182148&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Exec-managerial&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;60&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;&amp;gt;50K.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;48842 rows × 15 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;11-relevant-features&#34;&gt;1.1. Relevant features&lt;/h3&gt;
+&lt;p&gt;The value of the fnlwgt (final weight) column should have no predictive power, at least without further processing. We will drop this column.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Drop fnlwgt column
+data.drop(&#39;fnlwgt&#39;, axis=1, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;12-missing-values&#34;&gt;1.2. Missing values&lt;/h3&gt;
+&lt;p&gt;Missing values are represented as the string &amp;lsquo;?&#39;. We first replace them with NaNs.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Replace &#39;?&#39; with NaN
+data.replace(&#39;?&#39;, np.nan, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Count missing values
+data.isna().sum()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;age                  0
+workclass         2799
+education            0
+education_num        0
+marital_status       0
+occupation        2809
+relationship         0
+race                 0
+sex                  0
+capital_gain         0
+capital_loss         0
+hours_per_week       0
+native_country     857
+income               0
+dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The missing values are all within categorical variables. Since we can&amp;rsquo;t usefully infer them, we drop each row with a missing value.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data.dropna(axis=0, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Finally, reset index for convenience and store full dataset.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# reset index
+data.reset_index(drop=True, inplace=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Store full dataset
+data.to_csv(&amp;quot;./data/adult.csv&amp;quot;, index=False)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;13-encode-target-feature-as-integers&#34;&gt;1.3. Encode target feature as integers&lt;/h3&gt;
+&lt;p&gt;The target feature (income column) consists of strings of the form below:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data.income
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;0         &amp;lt;=50K
+1         &amp;lt;=50K
+2         &amp;lt;=50K
+3         &amp;lt;=50K
+4         &amp;lt;=50K
+          ...  
+45217    &amp;lt;=50K.
+45218    &amp;lt;=50K.
+45219    &amp;lt;=50K.
+45220    &amp;lt;=50K.
+45221     &amp;gt;50K.
+Name: income, Length: 45222, dtype: object
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We encode income below 50k as 0, and above 50k as 1.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data.income = data.income.str.strip(&amp;quot;.&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data.income = data.income.map({&amp;quot;&amp;lt;=50K&amp;quot;: 0, &amp;quot;&amp;gt;50K&amp;quot;: 1})
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data.income.value_counts()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;0    34014
+1    11208
+Name: income, dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;age&lt;/th&gt;
+      &lt;th&gt;workclass&lt;/th&gt;
+      &lt;th&gt;education&lt;/th&gt;
+      &lt;th&gt;education_num&lt;/th&gt;
+      &lt;th&gt;marital_status&lt;/th&gt;
+      &lt;th&gt;occupation&lt;/th&gt;
+      &lt;th&gt;relationship&lt;/th&gt;
+      &lt;th&gt;race&lt;/th&gt;
+      &lt;th&gt;sex&lt;/th&gt;
+      &lt;th&gt;capital_gain&lt;/th&gt;
+      &lt;th&gt;capital_loss&lt;/th&gt;
+      &lt;th&gt;hours_per_week&lt;/th&gt;
+      &lt;th&gt;native_country&lt;/th&gt;
+      &lt;th&gt;income&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;39&lt;/td&gt;
+      &lt;td&gt;State-gov&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Never-married&lt;/td&gt;
+      &lt;td&gt;Adm-clerical&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;2174&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;Self-emp-not-inc&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Exec-managerial&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;HS-grad&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Handlers-cleaners&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;53&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;11th&lt;/td&gt;
+      &lt;td&gt;7&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Handlers-cleaners&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;Black&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;28&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Wife&lt;/td&gt;
+      &lt;td&gt;Black&lt;/td&gt;
+      &lt;td&gt;Female&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;Cuba&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;45217&lt;/th&gt;
+      &lt;td&gt;33&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Never-married&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Own-child&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;45218&lt;/th&gt;
+      &lt;td&gt;39&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Not-in-family&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Female&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;36&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;45219&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Prof-specialty&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;45220&lt;/th&gt;
+      &lt;td&gt;44&lt;/td&gt;
+      &lt;td&gt;Private&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Divorced&lt;/td&gt;
+      &lt;td&gt;Adm-clerical&lt;/td&gt;
+      &lt;td&gt;Own-child&lt;/td&gt;
+      &lt;td&gt;Asian-Pac-Islander&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;5455&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;45221&lt;/th&gt;
+      &lt;td&gt;35&lt;/td&gt;
+      &lt;td&gt;Self-emp-inc&lt;/td&gt;
+      &lt;td&gt;Bachelors&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;Married-civ-spouse&lt;/td&gt;
+      &lt;td&gt;Exec-managerial&lt;/td&gt;
+      &lt;td&gt;Husband&lt;/td&gt;
+      &lt;td&gt;White&lt;/td&gt;
+      &lt;td&gt;Male&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;60&lt;/td&gt;
+      &lt;td&gt;United-States&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;45222 rows × 14 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;14-one-hot-encode-the-categorical-values&#34;&gt;1.4. One-Hot encode the categorical values&lt;/h3&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data = pd.get_dummies(data)
+data.shape
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;(45222, 104)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;data.head(3)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;age&lt;/th&gt;
+      &lt;th&gt;education_num&lt;/th&gt;
+      &lt;th&gt;capital_gain&lt;/th&gt;
+      &lt;th&gt;capital_loss&lt;/th&gt;
+      &lt;th&gt;hours_per_week&lt;/th&gt;
+      &lt;th&gt;income&lt;/th&gt;
+      &lt;th&gt;workclass_Federal-gov&lt;/th&gt;
+      &lt;th&gt;workclass_Local-gov&lt;/th&gt;
+      &lt;th&gt;workclass_Private&lt;/th&gt;
+      &lt;th&gt;workclass_Self-emp-inc&lt;/th&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;th&gt;native_country_Portugal&lt;/th&gt;
+      &lt;th&gt;native_country_Puerto-Rico&lt;/th&gt;
+      &lt;th&gt;native_country_Scotland&lt;/th&gt;
+      &lt;th&gt;native_country_South&lt;/th&gt;
+      &lt;th&gt;native_country_Taiwan&lt;/th&gt;
+      &lt;th&gt;native_country_Thailand&lt;/th&gt;
+      &lt;th&gt;native_country_Trinadad&amp;amp;Tobago&lt;/th&gt;
+      &lt;th&gt;native_country_United-States&lt;/th&gt;
+      &lt;th&gt;native_country_Vietnam&lt;/th&gt;
+      &lt;th&gt;native_country_Yugoslavia&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;39&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;2174&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;13&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;38&lt;/td&gt;
+      &lt;td&gt;9&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;40&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;3 rows × 104 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;14-feature-scaling&#34;&gt;1.4. Feature scaling&lt;/h3&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;X, y = data.drop(&#39;income&#39;, axis=1), data.income
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;scaler = StandardScaler()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;scaler.fit(X.loc[:, &#39;age&#39;: &#39;hours_per_week&#39;])
+X.loc[:, &#39;age&#39;: &#39;hours_per_week&#39;] = scaler.transform(X.loc[:, &#39;age&#39;: &#39;hours_per_week&#39;])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;X.head(5)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;age&lt;/th&gt;
+      &lt;th&gt;education_num&lt;/th&gt;
+      &lt;th&gt;capital_gain&lt;/th&gt;
+      &lt;th&gt;capital_loss&lt;/th&gt;
+      &lt;th&gt;hours_per_week&lt;/th&gt;
+      &lt;th&gt;workclass_Federal-gov&lt;/th&gt;
+      &lt;th&gt;workclass_Local-gov&lt;/th&gt;
+      &lt;th&gt;workclass_Private&lt;/th&gt;
+      &lt;th&gt;workclass_Self-emp-inc&lt;/th&gt;
+      &lt;th&gt;workclass_Self-emp-not-inc&lt;/th&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;th&gt;native_country_Portugal&lt;/th&gt;
+      &lt;th&gt;native_country_Puerto-Rico&lt;/th&gt;
+      &lt;th&gt;native_country_Scotland&lt;/th&gt;
+      &lt;th&gt;native_country_South&lt;/th&gt;
+      &lt;th&gt;native_country_Taiwan&lt;/th&gt;
+      &lt;th&gt;native_country_Thailand&lt;/th&gt;
+      &lt;th&gt;native_country_Trinadad&amp;amp;Tobago&lt;/th&gt;
+      &lt;th&gt;native_country_United-States&lt;/th&gt;
+      &lt;th&gt;native_country_Vietnam&lt;/th&gt;
+      &lt;th&gt;native_country_Yugoslavia&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;0.034201&lt;/td&gt;
+      &lt;td&gt;1.128753&lt;/td&gt;
+      &lt;td&gt;0.142888&lt;/td&gt;
+      &lt;td&gt;-0.21878&lt;/td&gt;
+      &lt;td&gt;-0.078120&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;0.866417&lt;/td&gt;
+      &lt;td&gt;1.128753&lt;/td&gt;
+      &lt;td&gt;-0.146733&lt;/td&gt;
+      &lt;td&gt;-0.21878&lt;/td&gt;
+      &lt;td&gt;-2.326738&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;-0.041455&lt;/td&gt;
+      &lt;td&gt;-0.438122&lt;/td&gt;
+      &lt;td&gt;-0.146733&lt;/td&gt;
+      &lt;td&gt;-0.21878&lt;/td&gt;
+      &lt;td&gt;-0.078120&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;1.093385&lt;/td&gt;
+      &lt;td&gt;-1.221559&lt;/td&gt;
+      &lt;td&gt;-0.146733&lt;/td&gt;
+      &lt;td&gt;-0.21878&lt;/td&gt;
+      &lt;td&gt;-0.078120&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;-0.798015&lt;/td&gt;
+      &lt;td&gt;1.128753&lt;/td&gt;
+      &lt;td&gt;-0.146733&lt;/td&gt;
+      &lt;td&gt;-0.21878&lt;/td&gt;
+      &lt;td&gt;-0.078120&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;5 rows × 103 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h2 id=&#34;2-data-modelling&#34;&gt;2. Data modelling&lt;/h2&gt;
+&lt;h3 id=&#34;21-train-test-split&#34;&gt;2.1. Train test split&lt;/h3&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;21-gradient-boosted-trees&#34;&gt;2.1. Gradient Boosted Trees&lt;/h3&gt;
+&lt;p&gt;We will use gradient boosted regression trees, with parameters tuned via grid search cross-validation. First, let&amp;rsquo;s look at the cross-validation scores with default values to get a baseline.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Gradient boosted trees with default values
+gbrt = GradientBoostingClassifier(random_state=0)
+kfold = KFold(n_splits=5, shuffle=True, random_state=0)
+scores = cross_val_score(gbrt, X, y, cv=kfold)
+print(&amp;quot;Cross-validation scores: mean {:.3f}, std {:.3f}&amp;quot;.format(scores.mean(), scores.std()))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Cross-validation scores: mean 0.863, std 0.001
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We&amp;rsquo;ll try tuning the following parameters:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;max_depth (defaults to 3)&lt;/li&gt;
+&lt;li&gt;n_estimators (defaults to 100)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We also keep random_state=0 as above for reproducibility.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Parameter grid to optimise over
+param_grid = {
+    &#39;random_state&#39;: [0],
+    &#39;max_depth&#39;: [2, 3, 4, 5],
+    &#39;n_estimators&#39;: [50, 100, 150, 200, 250, 300],
+}
+
+# Train our model
+grid_search = GridSearchCV(GradientBoostingClassifier(), param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+
+# Get scores and model information
+print(&amp;quot;Best parameters: {}&amp;quot;.format(grid_search.best_params_))
+print(&amp;quot;Best cross-validation score: {:.3f}&amp;quot;.format(grid_search.best_score_))
+print(&amp;quot;Best estimator:\n{}&amp;quot;.format(grid_search.best_estimator_))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Best parameters: {&#39;max_depth&#39;: 5, &#39;n_estimators&#39;: 200, &#39;random_state&#39;: 0}
+Best cross-validation score: 0.869
+Best estimator:
+GradientBoostingClassifier(ccp_alpha=0.0, criterion=&#39;friedman_mse&#39;, init=None,
+                           learning_rate=0.1, loss=&#39;deviance&#39;, max_depth=5,
+                           max_features=None, max_leaf_nodes=None,
+                           min_impurity_decrease=0.0, min_impurity_split=None,
+                           min_samples_leaf=1, min_samples_split=2,
+                           min_weight_fraction_leaf=0.0, n_estimators=200,
+                           n_iter_no_change=None, presort=&#39;deprecated&#39;,
+                           random_state=0, subsample=1.0, tol=0.0001,
+                           validation_fraction=0.1, verbose=0,
+                           warm_start=False)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;With some tuning of parameters, we see that our accuracy should raise to ~0.869 using max_depth = 5 and n_estimators=200. Let&amp;rsquo;s try our newly fitted model on the test set.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Get train and test set scores
+print(&amp;quot;Train set score: {:.3f}&amp;quot;.format(grid_search.score(X_train, y_train)))
+print(&amp;quot;Test set score: {:.3f}&amp;quot;.format(grid_search.score(X_test, y_test)))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Train set score: 0.884
+Test set score: 0.870
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Our gradient boosted tree model then achieves a test set accuracy of 87%.&lt;/p&gt;
+&lt;h4 id=&#34;further-tuning&#34;&gt;Further tuning&lt;/h4&gt;
+&lt;p&gt;Should we wish to tune parameters further, it would be useful to look at the grid search history to see the accuracy as a function of parameters. This can be extracted by the cv_results_ method, as seen below.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;results = pd.DataFrame(grid_search.cv_results_)
+results.head()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;mean_fit_time&lt;/th&gt;
+      &lt;th&gt;std_fit_time&lt;/th&gt;
+      &lt;th&gt;mean_score_time&lt;/th&gt;
+      &lt;th&gt;std_score_time&lt;/th&gt;
+      &lt;th&gt;param_max_depth&lt;/th&gt;
+      &lt;th&gt;param_n_estimators&lt;/th&gt;
+      &lt;th&gt;param_random_state&lt;/th&gt;
+      &lt;th&gt;params&lt;/th&gt;
+      &lt;th&gt;split0_test_score&lt;/th&gt;
+      &lt;th&gt;split1_test_score&lt;/th&gt;
+      &lt;th&gt;split2_test_score&lt;/th&gt;
+      &lt;th&gt;split3_test_score&lt;/th&gt;
+      &lt;th&gt;split4_test_score&lt;/th&gt;
+      &lt;th&gt;mean_test_score&lt;/th&gt;
+      &lt;th&gt;std_test_score&lt;/th&gt;
+      &lt;th&gt;rank_test_score&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;1.160780&lt;/td&gt;
+      &lt;td&gt;0.037878&lt;/td&gt;
+      &lt;td&gt;0.007860&lt;/td&gt;
+      &lt;td&gt;0.000821&lt;/td&gt;
+      &lt;td&gt;2&lt;/td&gt;
+      &lt;td&gt;50&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;{&#39;max_depth&#39;: 2, &#39;n_estimators&#39;: 50, &#39;random_s...&lt;/td&gt;
+      &lt;td&gt;0.847583&lt;/td&gt;
+      &lt;td&gt;0.855079&lt;/td&gt;
+      &lt;td&gt;0.854931&lt;/td&gt;
+      &lt;td&gt;0.850361&lt;/td&gt;
+      &lt;td&gt;0.852573&lt;/td&gt;
+      &lt;td&gt;0.852105&lt;/td&gt;
+      &lt;td&gt;0.002848&lt;/td&gt;
+      &lt;td&gt;24&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2.187243&lt;/td&gt;
+      &lt;td&gt;0.120700&lt;/td&gt;
+      &lt;td&gt;0.009864&lt;/td&gt;
+      &lt;td&gt;0.000370&lt;/td&gt;
+      &lt;td&gt;2&lt;/td&gt;
+      &lt;td&gt;100&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;{&#39;max_depth&#39;: 2, &#39;n_estimators&#39;: 100, &#39;random_...&lt;/td&gt;
+      &lt;td&gt;0.851562&lt;/td&gt;
+      &lt;td&gt;0.861566&lt;/td&gt;
+      &lt;td&gt;0.857880&lt;/td&gt;
+      &lt;td&gt;0.853457&lt;/td&gt;
+      &lt;td&gt;0.857585&lt;/td&gt;
+      &lt;td&gt;0.856410&lt;/td&gt;
+      &lt;td&gt;0.003531&lt;/td&gt;
+      &lt;td&gt;23&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;3.099185&lt;/td&gt;
+      &lt;td&gt;0.006702&lt;/td&gt;
+      &lt;td&gt;0.011799&lt;/td&gt;
+      &lt;td&gt;0.000122&lt;/td&gt;
+      &lt;td&gt;2&lt;/td&gt;
+      &lt;td&gt;150&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;{&#39;max_depth&#39;: 2, &#39;n_estimators&#39;: 150, &#39;random_...&lt;/td&gt;
+      &lt;td&gt;0.855248&lt;/td&gt;
+      &lt;td&gt;0.863777&lt;/td&gt;
+      &lt;td&gt;0.859502&lt;/td&gt;
+      &lt;td&gt;0.856848&lt;/td&gt;
+      &lt;td&gt;0.858322&lt;/td&gt;
+      &lt;td&gt;0.858739&lt;/td&gt;
+      &lt;td&gt;0.002895&lt;/td&gt;
+      &lt;td&gt;21&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;4.104170&lt;/td&gt;
+      &lt;td&gt;0.012035&lt;/td&gt;
+      &lt;td&gt;0.013877&lt;/td&gt;
+      &lt;td&gt;0.000131&lt;/td&gt;
+      &lt;td&gt;2&lt;/td&gt;
+      &lt;td&gt;200&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;{&#39;max_depth&#39;: 2, &#39;n_estimators&#39;: 200, &#39;random_...&lt;/td&gt;
+      &lt;td&gt;0.858343&lt;/td&gt;
+      &lt;td&gt;0.867168&lt;/td&gt;
+      &lt;td&gt;0.860386&lt;/td&gt;
+      &lt;td&gt;0.859502&lt;/td&gt;
+      &lt;td&gt;0.860829&lt;/td&gt;
+      &lt;td&gt;0.861246&lt;/td&gt;
+      &lt;td&gt;0.003081&lt;/td&gt;
+      &lt;td&gt;20&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;5.089706&lt;/td&gt;
+      &lt;td&gt;0.007495&lt;/td&gt;
+      &lt;td&gt;0.015999&lt;/td&gt;
+      &lt;td&gt;0.000137&lt;/td&gt;
+      &lt;td&gt;2&lt;/td&gt;
+      &lt;td&gt;250&lt;/td&gt;
+      &lt;td&gt;0&lt;/td&gt;
+      &lt;td&gt;{&#39;max_depth&#39;: 2, &#39;n_estimators&#39;: 250, &#39;random_...&lt;/td&gt;
+      &lt;td&gt;0.859080&lt;/td&gt;
+      &lt;td&gt;0.868790&lt;/td&gt;
+      &lt;td&gt;0.862893&lt;/td&gt;
+      &lt;td&gt;0.860091&lt;/td&gt;
+      &lt;td&gt;0.861566&lt;/td&gt;
+      &lt;td&gt;0.862484&lt;/td&gt;
+      &lt;td&gt;0.003408&lt;/td&gt;
+      &lt;td&gt;17&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;However to keep this post short, we will leave it at that.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Fitbit Data Exploration Part I</title>
