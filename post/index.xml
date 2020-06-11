@@ -1108,11 +1108,11 @@ X.loc[:, &#39;age&#39;: &#39;hours_per_week&#39;] = scaler.transform(X.loc[:, &#
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h3 id=&#34;22-gradient-boosted-trees&#34;&gt;2.2. Gradient Boosted Trees&lt;/h3&gt;
-&lt;p&gt;We will use gradient boosted regression trees, with parameters tuned via grid search cross-validation. First, let&amp;rsquo;s look at the cross-validation scores with default values to get a baseline.&lt;/p&gt;
+&lt;p&gt;We will use gradient boosted trees, with parameters tuned via grid search cross-validation. First, let&amp;rsquo;s look at the cross-validation scores with default values to get a baseline.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Gradient boosted trees with default values
-gbrt = GradientBoostingClassifier(random_state=0)
+gbt = GradientBoostingClassifier(random_state=0)
 kfold = KFold(n_splits=5, shuffle=True, random_state=0)
-scores = cross_val_score(gbrt, X, y, cv=kfold)
+scores = cross_val_score(gbt, X, y, cv=kfold)
 print(&amp;quot;Cross-validation scores: mean {:.3f}, std {:.3f}&amp;quot;.format(scores.mean(), scores.std()))
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;Cross-validation scores: mean 0.863, std 0.001
@@ -2480,7 +2480,7 @@ summary
 &lt;/table&gt;
 &lt;p&gt;231 rows × 12 columns&lt;/p&gt;
 &lt;/div&gt;
-&lt;p&gt;Now, the activeScore column is added by the python-fitbit wrapper to the Fitbit API. All values are -1 in our dataset so there&amp;rsquo;s not much loss of information in dropping the column.&lt;/p&gt;
+&lt;p&gt;Now, looking around the documentation the activeScore column seems to be an old feature. All values are -1 in our dataset so there&amp;rsquo;s not much loss of information in dropping the column.&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;(summary.activeScore == -1).all()
 &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;True

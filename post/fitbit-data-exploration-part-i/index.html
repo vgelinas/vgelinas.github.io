@@ -1734,7 +1734,7 @@ summary
 </table>
 <p>231 rows × 12 columns</p>
 </div>
-<p>Now, the activeScore column is added by the python-fitbit wrapper to the Fitbit API. All values are -1 in our dataset so there&rsquo;s not much loss of information in dropping the column.</p>
+<p>Now, looking around the documentation the activeScore column seems to be an old feature. All values are -1 in our dataset so there&rsquo;s not much loss of information in dropping the column.</p>
 <pre><code class="language-python">(summary.activeScore == -1).all()
 </code></pre>
 <pre><code>True

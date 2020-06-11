@@ -1656,11 +1656,11 @@ X.loc[:, 'age': 'hours_per_week'] = scaler.transform(X.loc[:, 'age': 'hours_per_
 <pre><code class="language-python">X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 </code></pre>
 <h3 id="22-gradient-boosted-trees">2.2. Gradient Boosted Trees</h3>
-<p>We will use gradient boosted regression trees, with parameters tuned via grid search cross-validation. First, let&rsquo;s look at the cross-validation scores with default values to get a baseline.</p>
+<p>We will use gradient boosted trees, with parameters tuned via grid search cross-validation. First, let&rsquo;s look at the cross-validation scores with default values to get a baseline.</p>
 <pre><code class="language-python"># Gradient boosted trees with default values
-gbrt = GradientBoostingClassifier(random_state=0)
+gbt = GradientBoostingClassifier(random_state=0)
 kfold = KFold(n_splits=5, shuffle=True, random_state=0)
-scores = cross_val_score(gbrt, X, y, cv=kfold)
+scores = cross_val_score(gbt, X, y, cv=kfold)
 print(&quot;Cross-validation scores: mean {:.3f}, std {:.3f}&quot;.format(scores.mean(), scores.std()))
 </code></pre>
 <pre><code>Cross-validation scores: mean 0.863, std 0.001
