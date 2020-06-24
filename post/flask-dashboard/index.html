@@ -27,7 +27,7 @@
   
     
   
-  <meta name="description" content="Making a simple Dashboard in Python, SQL and Flask.">
+  <meta name="description" content="Making a simple dashboard with Python, SQL and Flask.">
 
   
   <link rel="alternate" hreflang="en-us" href="https://vgelinas.github.io/post/flask-dashboard/">
@@ -238,7 +238,7 @@
   <meta property="og:site_name" content="Vincent Gélinas">
   <meta property="og:url" content="https://vgelinas.github.io/post/flask-dashboard/">
   <meta property="og:title" content="A Simple Dashboard in Flask | Vincent Gélinas">
-  <meta property="og:description" content="Making a simple Dashboard in Python, SQL and Flask."><meta property="og:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
+  <meta property="og:description" content="Making a simple dashboard with Python, SQL and Flask."><meta property="og:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
   <meta property="twitter:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png"><meta property="og:locale" content="en-us">
   
     
@@ -288,7 +288,7 @@
       "url": "https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png"
     }
   },
-  "description": "Making a simple Dashboard in Python, SQL and Flask."
+  "description": "Making a simple dashboard with Python, SQL and Flask."
 }
 </script>
 
@@ -566,20 +566,19 @@
 
     <div class="article-style">
       <p>The 
-<a href="https://flask.palletsprojects.com/en/1.1.x/" target="_blank" rel="noopener">Flask</a> python library can help create quick and minimalist dashboard.
-In this project, I created a mini-dashboard with a mix of Python, SQL and Flask to help me visualise fitness data.</p>
+<a href="https://flask.palletsprojects.com/en/1.1.x/" target="_blank" rel="noopener">Flask</a> python library can help create quick and minimalist dashboards. In this project, I created a mini-dashboard with a mix of Python, SQL and Flask to help me visualise fitness data. This is the result:</p>
 <p><img src="/img/posts/dashboard/dashboard.png" alt=""></p>
 <h3 id="project-structure">Project structure</h3>
 <p>The project layers are as follows:</p>
 <ul>
 <li>
-<p>Fitbit API wrapper: A class that handles interactions with the Fitbit REST API, dealing with the token authentication/refresh process.</p>
+<p>Fitbit API wrapper: A python class that handles interactions with the Fitbit REST API, dealing with the token authentication/refresh process.</p>
 </li>
 <li>
 <p>Database: A MySQL database holding the Fitbit API authentication credentials, as well as tables of fitness data (continuously updated).</p>
 </li>
 <li>
-<p>Server: A class that handles communicating with the Database, and fetching/updating Fitbit API credentials.</p>
+<p>Server: A python class that handles communicating with the Database, and fetching/updating Fitbit API credentials.</p>
 </li>
 <li>
 <p>Plotting module: Creates plots from database tables.</p>
