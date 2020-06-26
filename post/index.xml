@@ -18,7 +18,7 @@
       <pubDate>Tue, 23 Jun 2020 00:00:00 +0000</pubDate>
       <guid>https://vgelinas.github.io/post/flask-dashboard/</guid>
       <description>&lt;p&gt;The 
-&lt;a href=&#34;https://flask.palletsprojects.com/en/1.1.x/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Flask&lt;/a&gt; python library can help create quick and minimalist dashboards. In this project, I created a mini-dashboard with a mix of Python, SQL and Flask to help me visualise fitness data. This is the result:&lt;/p&gt;
+&lt;a href=&#34;https://flask.palletsprojects.com/en/1.1.x/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Flask&lt;/a&gt; python library can help create quick and minimalist dashboards. In this project, I created a mini-dashboard with a mix of Python, SQL and Flask to help me visualise smartwear data. This is the result:&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/dashboard/dashboard.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
 &lt;h3 id=&#34;project-structure&#34;&gt;Project structure&lt;/h3&gt;
 &lt;p&gt;The project layers are as follows:&lt;/p&gt;
