@@ -568,21 +568,21 @@
       <p>This comic was posted by 
 <a href="https://xkcd.com/2328/" target="_blank" rel="noopener">xkcd</a> last friday:</p>
 <p><img src="/img/posts/xkcd/space_basketball.png" alt=""></p>
-<p>I thought I&rsquo;d estimate the amount of throws needed to make it. How long will this take?</p>
+<p>I thought I&rsquo;d estimate the number of throws needed to make 30 shots in a row. How long will this take?</p>
 <h3 id="a-coin-flipping-problem">A coin flipping problem</h3>
 <p>This problem is pretty much the same as the following coin flipping problem: What is the expected number of coin flips needed before you get N consecutive tails?</p>
 <p>This is a pretty well-known problem, and google will tell you a lot. The only difference is the probability of success (50% for a fair coin, and 30% for a free throw), but let&rsquo;s start simple.</p>
 <p>&nbsp;</p>  
 <h4 id="expected-number-of-flips-before-getting-one-tail">Expected number of flips before getting one tail</h4>
-<p>Let&rsquo;s start with getting a single tail. Intuitively, we should expect 2 flips are needed on average are needed to get a tail, but let&rsquo;s work it out.</p>
+<p>Let&rsquo;s start with getting a single tail. Intuitively, we should expect 2 flips are needed on average to get a tail, but let&rsquo;s work it out.</p>
 <p>The expected value E is the weighted average over each possible outcome, weighted by the odds of that outcome. In this scenario, the number of flips required could be k = 1, 2, 3, 4, &hellip; and so on. For each number of flips k required, we then figure out the odds:</p>
 <ul>
-<li>k = 1: If you flip once, you have 1/2 chance of getting a tail.</li>
+<li>k = 1: These are the odds of getting tail at the start. The probability is 1/2.</li>
 <li>k = 2: These are the odds of getting head, then tail. This comes out to (1/2)(1/2) = 1/4.</li>
-<li>k = 3: The odds of getting head, head, then tail. This is $(1/2)^3 = 1/8$.</li>
+<li>k = 3: These are the odds of getting head, head, then tail. This is $(1/2)^3 = 1/8$.</li>
 <li>&hellip;</li>
 </ul>
-<p>Following the pattern, the odds of needing $k$ flips are $(1/2)^k$. The expected value is then
+<p>Following the pattern, if you require exactly $k$ flips then you had $k-1$ heads followed by a tail, and the odds of this are $(1/2)^k$. The expected value is then
 \begin{align*}
 E &amp;= \sum_{outcome} ({\rm outcome})*({\rm odds}) \newline
 &amp;= \ \ \sum_{k = 1}^{\infty} k  (1/2)^k.
@@ -602,7 +602,7 @@ valid for all $|x| &lt; 1$. Setting $x = 1/2$ then gives $E = 2$.</p>
 <li>If the first flip is tail, and then head, then your expected value becomes $E+2$. This happens with probability 1/4.</li>
 <li>If your first two flips are tail, then you are done. This happens with probability 1/4.</li>
 </ul>
-<p>Since this covers all outcomes, the expected value can then be computed as the sum of expected value for each outcome, weighted by its odds. This gives<br>
+<p>Since this covers all outcomes, the expected value can then be computed as the sum of expected values for each outcome, weighted by the odds of that outcome. This gives<br>
 \begin{align*}
 E &amp;= \frac{1}{2}(E+1) + \frac{1}{4}(E+2) + \frac{1}{4}(2).
 \end{align*}
@@ -621,7 +621,7 @@ Solving gives $E=6$. So we&rsquo;d expected about 6 flips before seeing two cons
 <li>a tail, followed by a head, your expected value becomes $E+2$. The odds are 1/4.</li>
 <li>tail, tail, then head, then your expected value becomes $E+3$. The odds are 1/8.</li>
 <li>&hellip;</li>
-<li>(N-1) tails, then a head, then your expected value becomes $E+N$. The odds are (1/2)^N.</li>
+<li>(N-1) tails, then head, then your expected value becomes $E+N$. The odds are (1/2)^N.</li>
 <li>N tails, then you&rsquo;re done. The odds of this are also (1/2)^N.</li>
 </ul>
 <p>Summing up the expected value of each outcome, we obtain</p>
@@ -653,17 +653,17 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 <li>If we get success, success, then failure, the expectation becomes $E+3$ with odds $p^2q$.</li>
 <li>&hellip;</li>
 <li>If we get (N-1) successes then failure, the expectation is $E+N$ with odds $p^{N-1}q$.</li>
-<li>If we get N successes, we are done. The odds are $p^N$.</li>
+<li>If we get N successes, we are done. The odds of this are $p^N$.</li>
 </ul>
-<p>The expected value $E$ is again the sum of expectations over all outcomes, weighted by the odds of occuring. In other words,</p>
+<p>The expected value $E$ is again the sum of expectations over all outcomes, weighted by the odds of each outcome. In other words,</p>
 <p>$$ E = q(E+1) + pq(E+2) + p^2q(E+3) + &hellip; + p^{N-1}q(E+N) + p^N N. $$</p>
-<p>Solving this using the same techniques as above, we obtain</p>
+<p>Solving this using the same techniques as above (and remembering $q = 1 - p$), we obtain</p>
 <p>$$ E = \frac{1-p^N}{p^N(1-p)}. $$</p>
-<p>Our free throw accuracy is 30%, and so our expected number of shots before getting 30 straight in is roughly</p>
+<p>Now, our free throw accuracy is 30%, and so our expected number of shots before getting 30 consecutive shots in is roughly</p>
 <p>$$ E \approx 6.93848×10^{15} = 6,938,480,000,000,000.$$</p>
 <p>A non-starter.</p>
 <p>The NBA 
-<a href="https://www.teamrankings.com/nba/player-stat/free-throw-percentage" target="_blank" rel="noopener">lists</a> Kawhi Leonard as having free throw accuracy of 88.9%. His expected number of shots to get 30 consecutive in is then</p>
+<a href="https://www.teamrankings.com/nba/player-stat/free-throw-percentage" target="_blank" rel="noopener">lists</a> Kawhi Leonard as having free throw accuracy of 88.9%. His expected number of shots to make 30 in a row is about</p>
 <p>$$ E \approx 298.335 $$</p>
 <p>which is way more manageable.</p>
 
