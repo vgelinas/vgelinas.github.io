@@ -529,7 +529,7 @@
   
   <span class="middot-divider"></span>
   <span class="article-reading-time">
-    5 min read
+    6 min read
   </span>
   
 
@@ -646,7 +646,8 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 <li>p: the chance of success for free throws.</li>
 <li>q: the chance of failure for free throws.</li>
 </ul>
-<p>In our setting these values are $p = 0.30$ and $q = 1 - p = 0.70$. Just like before, we can break down the expected values in terms of what happens on the first $N$ throws:</p>
+<p>In our setting these values are $p = 0.30$ and $q = 1 - p = 0.70$.</p>
+<p>Let&rsquo;s compute the expected number E of free throws needed to make N shots in a row. Like the previous case, we can break down the expected value in terms of what happens on the first $N$ throws:</p>
 <ul>
 <li>If the 1st throw is a failure, then the expectation becomes $E+1$. The odds of this are $q$.</li>
 <li>If we get success, then failure, the expectation is $E+2$. The odds of this are $pq$.</li>
@@ -657,15 +658,54 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 </ul>
 <p>The expected value $E$ is again the sum of expectations over all outcomes, weighted by the odds of each outcome. In other words,</p>
 <p>$$ E = q(E+1) + pq(E+2) + p^2q(E+3) + &hellip; + p^{N-1}q(E+N) + p^N N. $$</p>
-<p>Solving this using the same techniques as above (and remembering $q = 1 - p$), we obtain</p>
+<p>Solving this using the same technique as above (and remembering $q = 1 - p$), we obtain</p>
 <p>$$ E = \frac{1-p^N}{p^N(1-p)}. $$</p>
-<p>Now, our free throw accuracy is 30%, and so our expected number of shots before getting 30 consecutive shots in is roughly</p>
+<p>Now, our free throw accuracy is 30%, and so our expected number of shots before getting N=30 consecutive shots in is roughly</p>
 <p>$$ E \approx 6.93848×10^{15} = 6,938,480,000,000,000.$$</p>
 <p>A non-starter.</p>
-<p>The NBA 
-<a href="https://www.teamrankings.com/nba/player-stat/free-throw-percentage" target="_blank" rel="noopener">lists</a> Kawhi Leonard as having free throw accuracy of 88.9%. His expected number of shots to make 30 in a row is about</p>
-<p>$$ E \approx 298.335 $$</p>
+<p>Kawhi Leonard is 
+<a href="https://www.teamrankings.com/nba/player-stat/free-throw-percentage" target="_blank" rel="noopener">listed</a> as having free throw accuracy of 88.9% this season. His expected number of shots to make 30 in a row, for comparison, is about</p>
+<p>$$ E \approx 298 $$</p>
 <p>which is way more manageable.</p>
+<p>We can get professional player stats for the 2020 Basketball season from 
+<a href="https://www.teamrankings.com/nba/player-stat/free-throw-percentage" target="_blank" rel="noopener">various</a> 
+<a href="https://www.basketball-reference.com/leagues/NBA_stats_per_game.html" target="_blank" rel="noopener">sites</a>. For example, the average NBA player had a free throw success rate of 77.1% in the last season. Collecting a few players, we can see how long each player needs to make 30 shots in a row.</p>
+<table>
+<thead>
+<tr>
+<th align="right">name</th>
+<th align="right">free throw percentage</th>
+<th align="right">expected value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">Devin Booker</td>
+<td align="right">0.916</td>
+<td align="right">154</td>
+</tr>
+<tr>
+<td align="right">Kawhi Leonard</td>
+<td align="right">0.889</td>
+<td align="right">298</td>
+</tr>
+<tr>
+<td align="right">Kyle Lowry</td>
+<td align="right">0.861</td>
+<td align="right">634</td>
+</tr>
+<tr>
+<td align="right">Average NBA Player</td>
+<td align="right">0.771</td>
+<td align="right">10675</td>
+</tr>
+<tr>
+<td align="right">LeBron James</td>
+<td align="right">0.697</td>
+<td align="right">166558</td>
+</tr>
+</tbody>
+</table>
 
     </div>
 

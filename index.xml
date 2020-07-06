@@ -98,7 +98,8 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 &lt;li&gt;p: the chance of success for free throws.&lt;/li&gt;
 &lt;li&gt;q: the chance of failure for free throws.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;In our setting these values are $p = 0.30$ and $q = 1 - p = 0.70$. Just like before, we can break down the expected values in terms of what happens on the first $N$ throws:&lt;/p&gt;
+&lt;p&gt;In our setting these values are $p = 0.30$ and $q = 1 - p = 0.70$.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s compute the expected number E of free throws needed to make N shots in a row. Like the previous case, we can break down the expected value in terms of what happens on the first $N$ throws:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;If the 1st throw is a failure, then the expectation becomes $E+1$. The odds of this are $q$.&lt;/li&gt;
 &lt;li&gt;If we get success, then failure, the expectation is $E+2$. The odds of this are $pq$.&lt;/li&gt;
@@ -109,15 +110,54 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 &lt;/ul&gt;
 &lt;p&gt;The expected value $E$ is again the sum of expectations over all outcomes, weighted by the odds of each outcome. In other words,&lt;/p&gt;
 &lt;p&gt;$$ E = q(E+1) + pq(E+2) + p^2q(E+3) + &amp;hellip; + p^{N-1}q(E+N) + p^N N. $$&lt;/p&gt;
-&lt;p&gt;Solving this using the same techniques as above (and remembering $q = 1 - p$), we obtain&lt;/p&gt;
+&lt;p&gt;Solving this using the same technique as above (and remembering $q = 1 - p$), we obtain&lt;/p&gt;
 &lt;p&gt;$$ E = \frac{1-p^N}{p^N(1-p)}. $$&lt;/p&gt;
-&lt;p&gt;Now, our free throw accuracy is 30%, and so our expected number of shots before getting 30 consecutive shots in is roughly&lt;/p&gt;
+&lt;p&gt;Now, our free throw accuracy is 30%, and so our expected number of shots before getting N=30 consecutive shots in is roughly&lt;/p&gt;
 &lt;p&gt;$$ E \approx 6.93848×10^{15} = 6,938,480,000,000,000.$$&lt;/p&gt;
 &lt;p&gt;A non-starter.&lt;/p&gt;
-&lt;p&gt;The NBA 
-&lt;a href=&#34;https://www.teamrankings.com/nba/player-stat/free-throw-percentage&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;lists&lt;/a&gt; Kawhi Leonard as having free throw accuracy of 88.9%. His expected number of shots to make 30 in a row is about&lt;/p&gt;
-&lt;p&gt;$$ E \approx 298.335 $$&lt;/p&gt;
+&lt;p&gt;Kawhi Leonard is 
+&lt;a href=&#34;https://www.teamrankings.com/nba/player-stat/free-throw-percentage&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;listed&lt;/a&gt; as having free throw accuracy of 88.9% this season. His expected number of shots to make 30 in a row, for comparison, is about&lt;/p&gt;
+&lt;p&gt;$$ E \approx 298 $$&lt;/p&gt;
 &lt;p&gt;which is way more manageable.&lt;/p&gt;
+&lt;p&gt;We can get professional player stats for the 2020 Basketball season from 
+&lt;a href=&#34;https://www.teamrankings.com/nba/player-stat/free-throw-percentage&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;various&lt;/a&gt; 
+&lt;a href=&#34;https://www.basketball-reference.com/leagues/NBA_stats_per_game.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;sites&lt;/a&gt;. For example, the average NBA player had a free throw success rate of 77.1% in the last season. Collecting a few players, we can see how long each player needs to make 30 shots in a row.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th align=&#34;right&#34;&gt;name&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;free throw percentage&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;expected value&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td align=&#34;right&#34;&gt;Devin Booker&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.916&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;154&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&#34;right&#34;&gt;Kawhi Leonard&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.889&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;298&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&#34;right&#34;&gt;Kyle Lowry&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.861&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;634&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&#34;right&#34;&gt;Average NBA Player&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.771&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;10675&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&#34;right&#34;&gt;LeBron James&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.697&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;166558&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 </description>
     </item>
     
