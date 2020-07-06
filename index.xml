@@ -63,7 +63,7 @@ This simplifies to
 E &amp;amp;= (\frac{1}{2} + \frac{1}{4})E + (\frac{1}{2} + \frac{1}{4} + \frac{1}{2}) \newline
 &amp;amp;= \frac{3}{4}E + \frac{6}{4}.
 \end{align*}
-Solving gives $E=6$. So we&amp;rsquo;d expected about 6 flips before seeing two consecutive tails.&lt;/p&gt;
+Solving gives $E=6$. So we&amp;rsquo;d expect about 6 flips before seeing two consecutive tails.&lt;/p&gt;
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;  
 &lt;h4 id=&#34;expected-number-of-flips-to-get-n-consecutive-tails&#34;&gt;Expected number of flips to get N consecutive tails&lt;/h4&gt;
 &lt;p&gt;We can use the same trick as above to go from $2$ to $N$. This time, we look at the possible scenarios for the first N flips and the expected value of each scenario.&lt;/p&gt;
