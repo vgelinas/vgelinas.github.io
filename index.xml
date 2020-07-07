@@ -125,7 +125,7 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 &lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
-&lt;th align=&#34;right&#34;&gt;name&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;player&lt;/th&gt;
 &lt;th align=&#34;right&#34;&gt;free throw success rate&lt;/th&gt;
 &lt;th align=&#34;right&#34;&gt;expected value&lt;/th&gt;
 &lt;/tr&gt;
