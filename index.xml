@@ -93,7 +93,7 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 &amp;amp;\sum_{k=1}^N kx^k = \frac{(Nx - N - 1)x^{N+1} + x}{(x-1)^2}.
 \end{align*}&lt;/p&gt;
 &lt;p&gt;Setting $x = \frac{1}{2}$ and solving for $E$ gives $E = 2^{N+1} - 2$. Hence we should expect to flip on average $2^{N+1} - 2$ coins before getting $N$ consecutive tails.&lt;/p&gt;
-&lt;p&gt;As we see the number of flips needed grows rapidly with $N$. Here are the first six values:&lt;/p&gt;
+&lt;p&gt;As we see the number of coin flips needed grows rapidly with $N$. Here are the first six values:&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/xkcd/coinflips.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;  
 &lt;h3 id=&#34;back-to-space-basketball&#34;&gt;Back to Space Basketball&lt;/h3&gt;
