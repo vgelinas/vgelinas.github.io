@@ -27,19 +27,21 @@
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;  
 &lt;h4 id=&#34;expected-number-of-flips-before-getting-one-tail&#34;&gt;Expected number of flips before getting one tail&lt;/h4&gt;
 &lt;p&gt;Let&amp;rsquo;s start with getting a single tail. Intuitively, we should expect 2 flips are needed on average to get a tail, but let&amp;rsquo;s work it out.&lt;/p&gt;
-&lt;p&gt;The expected value E is the weighted average over each possible outcome, weighted by the odds of that outcome. In this scenario, the number of flips required could be k = 1, 2, 3, 4, &amp;hellip; and so on. For each number of flips k required, we then figure out the odds:&lt;/p&gt;
+&lt;p&gt;The expected value E is the weighted average over possible outcomes, weighted by the odds of each outcome. In this scenario, the number of flips required could be k = 1, 2, 3, 4, &amp;hellip; and so on. For each number of flips k required, we then figure out the odds of that outcome:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;k = 1: These are the odds of getting tail at the start. The probability is 1/2.&lt;/li&gt;
 &lt;li&gt;k = 2: These are the odds of getting head, then tail. This comes out to (1/2)(1/2) = 1/4.&lt;/li&gt;
 &lt;li&gt;k = 3: These are the odds of getting head, head, then tail. This is $(1/2)^3 = 1/8$.&lt;/li&gt;
-&lt;li&gt;&amp;hellip;&lt;/li&gt;
+&lt;li&gt;$\ldots$&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Following the pattern, if you require exactly $k$ flips then you had $k-1$ heads followed by a tail, and the odds of this are $(1/2)^k$. The expected value is then
+&lt;p&gt;Following the pattern, if you require exactly $k$ flips then you had $k-1$ heads followed by a tail, and the odds of this are $(1/2)^k$. The expected value is then the sum
 \begin{align*}
 E &amp;amp;= \sum_{outcome} ({\rm outcome})*({\rm odds}) \newline
-&amp;amp;= \ \ \sum_{k = 1}^{\infty} k  (1/2)^k.
+&amp;amp;= \ \ \sum_{k = 1}^{\infty} k  (1/2)^k \newline
+&amp;amp;= 1 \cdot \frac{1}{2} + 2 \cdot \frac{1}{4} + 3 \cdot \frac{1}{8} + 4 \cdot \frac{1}{16} + &amp;hellip;
 \end{align*}
-This is a known variant of the geometric series. The general sum can be expressed as
+This is a known variant of the 
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Geometric_series#Geometric_power_series&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;geometric series&lt;/a&gt;. The general sum can be expressed as
 \begin{align*}
 \sum_{k = 1}^{\infty} kx^k  = \frac{x}{(x-1)^2}
 \end{align*}
@@ -47,14 +49,15 @@ valid for all $|x| &amp;lt; 1$. Setting $x = 1/2$ then gives $E = 2$.&lt;/p&gt;
 &lt;p&gt;So, our initial guess was right: you&amp;rsquo;d expect to need 2 flips before getting a tail.&lt;/p&gt;
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;  
 &lt;h4 id=&#34;expected-number-of-flips-to-get-two-consecutive-tails&#34;&gt;Expected number of flips to get two consecutive tails&lt;/h4&gt;
-&lt;p&gt;We can again compute the expected value $E$. This time, we will use a trick to simplify the calculations: If you miss the first flip, the expected number of flips needed increases by one!&lt;/p&gt;
-&lt;p&gt;Let&amp;rsquo;s run over the possible scenarios for the first two flips:&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s consider a slightly more complex case. This time, we want the expected number of flips before getting two tails in a row.&lt;/p&gt;
+&lt;p&gt;Just as before we could list all possible scenarios, with the odds of each scenario, and take the weighted average. Instead, we will use a nice trick to simplify our calculations: if you fail after one or two flips, then your expected number E of flips increases by that amount!&lt;/p&gt;
+&lt;p&gt;To see what this means, let&amp;rsquo;s run over the possible scenarios but only for the first two flips:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;If the first flip is head, then your expected value at this point is $E+1$. This happens with probability 1/2.&lt;/li&gt;
 &lt;li&gt;If the first flip is tail, and then head, then your expected value becomes $E+2$. This happens with probability 1/4.&lt;/li&gt;
 &lt;li&gt;If your first two flips are tail, then you are done. This happens with probability 1/4.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Since this covers all outcomes, the expected value can then be computed as the sum of expected values for each outcome, weighted by the odds of that outcome. This gives&lt;br&gt;
+&lt;p&gt;Since this covers all possible outcomes, the expected value can then be computed as the sum of expected values for each outcome, weighted by the odds of that outcome. This gives&lt;br&gt;
 \begin{align*}
 E &amp;amp;= \frac{1}{2}(E+1) + \frac{1}{4}(E+2) + \frac{1}{4}(2).
 \end{align*}
@@ -90,6 +93,8 @@ E = \left(\sum_{k=1}^N \frac{1}{2^k}\right) E + \left( \sum_{k=1}^N \frac{k}{2^k
 &amp;amp;\sum_{k=1}^N kx^k = \frac{(Nx - N - 1)x^{N+1} + x}{(x-1)^2}.
 \end{align*}&lt;/p&gt;
 &lt;p&gt;Setting $x = \frac{1}{2}$ and solving for $E$ gives $E = 2^{N+1} - 2$. Hence we should expect to flip on average $2^{N+1} - 2$ coins before getting $N$ consecutive tails.&lt;/p&gt;
+&lt;p&gt;As we see the number of flips needed grows rapidly with $N$. Here are the first six values:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/xkcd/coinflips.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;  
 &lt;h3 id=&#34;back-to-space-basketball&#34;&gt;Back to Space Basketball&lt;/h3&gt;
 &lt;p&gt;We can use a similar logic to solve our original problem. In the coin problem the odds of success/failure were 50%/50%, while our free throw success/failure rates were 30%/70%.&lt;/p&gt;
