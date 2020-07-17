@@ -5,12 +5,2188 @@
     <link>https://vgelinas.github.io/post/</link>
       <atom:link href="https://vgelinas.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     <description>Posts</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2020 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Wed, 15 Jul 2020 00:00:00 +0000</lastBuildDate>
     <image>
       <url>https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
       <title>Posts</title>
       <link>https://vgelinas.github.io/post/</link>
     </image>
+    
+    <item>
+      <title>Predicting Toronto Rent Prices</title>
+      <link>https://vgelinas.github.io/post/predicting-toronto-rent-prices/</link>
+      <pubDate>Wed, 15 Jul 2020 00:00:00 +0000</pubDate>
+      <guid>https://vgelinas.github.io/post/predicting-toronto-rent-prices/</guid>
+      <description>&lt;p&gt;In this Python jupyter notebook we will go through an end-to-end machine learning project and build a predictive model for apartment rent prices in Toronto. This is a classic regression task, and we will go through the following:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Data collection.&lt;/li&gt;
+&lt;li&gt;Data preparation &amp;amp; feature engineering.&lt;/li&gt;
+&lt;li&gt;Model selection and evaluation.&lt;/li&gt;
+&lt;li&gt;Deployment.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_58_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;See the 
+&lt;a href=&#34;https://github.com/vgelinas/data-projects/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Github&lt;/a&gt; repository for this project&amp;rsquo;s notebook, datasets and additional scripts.&lt;/p&gt;
+&lt;h4 id=&#34;required-libraries&#34;&gt;Required libraries&lt;/h4&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# General libraries
+import pandas as pd
+import numpy as np
+from scipy.stats import uniform, randint
+
+# Visualisations
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import seaborn as sns
+%matplotlib inline
+
+# Data preprocessing and transformers
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from sklearn.preprocessing import OneHotEncoder
+
+# Model selection
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.linear_model import Lasso
+from sklearn.neighbors import KNeighborsRegressor
+from xgboost import XGBRegressor
+
+# Evaluate regression models
+from sklearn.metrics import mean_squared_error
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;1-data-collection&#34;&gt;1. Data collection&lt;/h2&gt;
+&lt;p&gt;The data was scraped from the rental site &lt;a href=&#34;https://www.rentals.ca/&#34;&gt;https://www.rentals.ca/&lt;/a&gt; and consists of ~6800 data points with 13 columns:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;price (per month)&lt;/li&gt;
+&lt;li&gt;city&lt;/li&gt;
+&lt;li&gt;street address&lt;/li&gt;
+&lt;li&gt;postal code&lt;/li&gt;
+&lt;li&gt;longitude&lt;/li&gt;
+&lt;li&gt;latitude&lt;/li&gt;
+&lt;li&gt;rental type&lt;/li&gt;
+&lt;li&gt;number of bedrooms&lt;/li&gt;
+&lt;li&gt;number of bathrooms&lt;/li&gt;
+&lt;li&gt;sqft&lt;/li&gt;
+&lt;li&gt;text description&lt;/li&gt;
+&lt;li&gt;year built&lt;/li&gt;
+&lt;li&gt;number of parking spots&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/br&gt;
+&lt;h2 id=&#34;2-data-preparation&#34;&gt;2. Data preparation&lt;/h2&gt;
+&lt;h3 id=&#34;21-exploration--feature-engineering&#34;&gt;2.1. Exploration &amp;amp; feature engineering&lt;/h3&gt;
+&lt;p&gt;Let&amp;rsquo;s take a first look at the data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load and display dataset
+df = pd.read_csv(&amp;quot;./data/toronto_apartment_rentals_2020.csv&amp;quot;)
+df
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;street_address&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;rental_type&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;description_text&lt;/th&gt;
+      &lt;th&gt;year_built&lt;/th&gt;
+      &lt;th&gt;parking_spots&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;334 Gladstone Avenue&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6J 3L6&lt;/td&gt;
+      &lt;td&gt;2999.0&lt;/td&gt;
+      &lt;td&gt;-79.431071&lt;/td&gt;
+      &lt;td&gt;43.652523&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;38 Waterbury Drive&lt;/td&gt;
+      &lt;td&gt;Etobicoke&lt;/td&gt;
+      &lt;td&gt;M9R 3X6&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+      &lt;td&gt;-79.571523&lt;/td&gt;
+      &lt;td&gt;43.686387&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;11 Wellesley Street West&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4Y 1E8&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+      &lt;td&gt;-79.385247&lt;/td&gt;
+      &lt;td&gt;43.664503&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;Candy Factory Loft - Penthouse&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6J 1H2&lt;/td&gt;
+      &lt;td&gt;8495.0&lt;/td&gt;
+      &lt;td&gt;-79.415616&lt;/td&gt;
+      &lt;td&gt;43.644649&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;77 Finch Avenue East&lt;/td&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2N 6H8&lt;/td&gt;
+      &lt;td&gt;1200.0&lt;/td&gt;
+      &lt;td&gt;-79.411910&lt;/td&gt;
+      &lt;td&gt;43.780085&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6826&lt;/th&gt;
+      &lt;td&gt;38 Elm Street&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5G 2K5&lt;/td&gt;
+      &lt;td&gt;2400.0&lt;/td&gt;
+      &lt;td&gt;-79.383640&lt;/td&gt;
+      &lt;td&gt;43.657599&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6827&lt;/th&gt;
+      &lt;td&gt;500 Sherbourne Street&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4X 1L1&lt;/td&gt;
+      &lt;td&gt;2975.0&lt;/td&gt;
+      &lt;td&gt;-79.375682&lt;/td&gt;
+      &lt;td&gt;43.667902&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;900.0&lt;/td&gt;
+      &lt;td&gt;500 SHERBOURNE STREET, SUITE 803\n\nTORONTO - ...&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6828&lt;/th&gt;
+      &lt;td&gt;159 Gerrard Street East&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A 2E4&lt;/td&gt;
+      &lt;td&gt;3195.0&lt;/td&gt;
+      &lt;td&gt;-79.374276&lt;/td&gt;
+      &lt;td&gt;43.660670&lt;/td&gt;
+      &lt;td&gt;Apartment&lt;/td&gt;
+      &lt;td&gt;3.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6829&lt;/th&gt;
+      &lt;td&gt;460 Adelaide Street East&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A 1N6&lt;/td&gt;
+      &lt;td&gt;2150.0&lt;/td&gt;
+      &lt;td&gt;-79.366487&lt;/td&gt;
+      &lt;td&gt;43.652770&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6830&lt;/th&gt;
+      &lt;td&gt;135 Lambton Avenue&lt;/td&gt;
+      &lt;td&gt;York&lt;/td&gt;
+      &lt;td&gt;M6N 2S8&lt;/td&gt;
+      &lt;td&gt;2500.0&lt;/td&gt;
+      &lt;td&gt;-79.491092&lt;/td&gt;
+      &lt;td&gt;43.682418&lt;/td&gt;
+      &lt;td&gt;Accommodation&lt;/td&gt;
+      &lt;td&gt;4.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;6831 rows × 13 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;At first sight some columns have a lot of missing values.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.isna().sum()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;street_address         0
+city                   0
+postal_code           21
+price                  0
+longitude              0
+latitude               0
+rental_type            0
+bedrooms             899
+bathrooms           1013
+sqft                5182
+description_text    5192
+year_built          6119
+parking_spots       6119
+dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It looks like the last 4 columns are pretty sparse. Since there&amp;rsquo;s so little in the last 3 columns and it&amp;rsquo;s not clear how useful these features would be, for simplicity we will simply drop them. The sqft feature is also rather sparse, but it should have good predictive power and so we&amp;rsquo;ll keep it. We can instead try to infer it from the other features.&lt;/p&gt;
+&lt;p&gt;We&amp;rsquo;ll drop the street address column as well, since the location data is already encoded in the postal code and longitude/latitude.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s look at the rental type column.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.rental_type.value_counts()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Accommodation    5919
+Apartment         912
+Name: rental_type, dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Accommodation just seems like a generic term (as opposed to, say, apartment vs condo vs house). We&amp;rsquo;ll drop this column as well since there isn&amp;rsquo;t a clear divide between accommodation and apartment.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df = df.drop([&#39;description_text&#39;, &#39;year_built&#39;, &#39;parking_spots&#39;, &#39;street_address&#39;, &#39;rental_type&#39;], axis=1)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6J 3L6&lt;/td&gt;
+      &lt;td&gt;2999.0&lt;/td&gt;
+      &lt;td&gt;-79.431071&lt;/td&gt;
+      &lt;td&gt;43.652523&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;Etobicoke&lt;/td&gt;
+      &lt;td&gt;M9R 3X6&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+      &lt;td&gt;-79.571523&lt;/td&gt;
+      &lt;td&gt;43.686387&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4Y 1E8&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+      &lt;td&gt;-79.385247&lt;/td&gt;
+      &lt;td&gt;43.664503&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6J 1H2&lt;/td&gt;
+      &lt;td&gt;8495.0&lt;/td&gt;
+      &lt;td&gt;-79.415616&lt;/td&gt;
+      &lt;td&gt;43.644649&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2N 6H8&lt;/td&gt;
+      &lt;td&gt;1200.0&lt;/td&gt;
+      &lt;td&gt;-79.411910&lt;/td&gt;
+      &lt;td&gt;43.780085&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6826&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5G 2K5&lt;/td&gt;
+      &lt;td&gt;2400.0&lt;/td&gt;
+      &lt;td&gt;-79.383640&lt;/td&gt;
+      &lt;td&gt;43.657599&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6827&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4X 1L1&lt;/td&gt;
+      &lt;td&gt;2975.0&lt;/td&gt;
+      &lt;td&gt;-79.375682&lt;/td&gt;
+      &lt;td&gt;43.667902&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;900.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6828&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A 2E4&lt;/td&gt;
+      &lt;td&gt;3195.0&lt;/td&gt;
+      &lt;td&gt;-79.374276&lt;/td&gt;
+      &lt;td&gt;43.660670&lt;/td&gt;
+      &lt;td&gt;3.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6829&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A 1N6&lt;/td&gt;
+      &lt;td&gt;2150.0&lt;/td&gt;
+      &lt;td&gt;-79.366487&lt;/td&gt;
+      &lt;td&gt;43.652770&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6830&lt;/th&gt;
+      &lt;td&gt;York&lt;/td&gt;
+      &lt;td&gt;M6N 2S8&lt;/td&gt;
+      &lt;td&gt;2500.0&lt;/td&gt;
+      &lt;td&gt;-79.491092&lt;/td&gt;
+      &lt;td&gt;43.682418&lt;/td&gt;
+      &lt;td&gt;4.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;6831 rows × 8 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h4 id=&#34;infer-missing-values&#34;&gt;Infer missing values&lt;/h4&gt;
+&lt;p&gt;A feature like the square footage should carry a lot of importance in determining price. Since we only have ~1700 rows with sqft data, we would like to infer it from the other (non-price) features. First let&amp;rsquo;s take a look at the sqft data itself.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.sqft, ax=axes[0])
+sns.kdeplot(df.sqft, ax=axes[1])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223bb5d5b0&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_16_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df[df.sqft &amp;gt; 100000]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;446&lt;/th&gt;
+      &lt;td&gt;Vaughan&lt;/td&gt;
+      &lt;td&gt;L4K 1W8&lt;/td&gt;
+      &lt;td&gt;2350.0&lt;/td&gt;
+      &lt;td&gt;-79.521298&lt;/td&gt;
+      &lt;td&gt;43.795942&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;800899.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6578&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5J 0B1&lt;/td&gt;
+      &lt;td&gt;3000.0&lt;/td&gt;
+      &lt;td&gt;-79.382245&lt;/td&gt;
+      &lt;td&gt;43.641850&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;700799.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;These seem to be clear errors. The owner probably meant to write a range like 800-899 sqft, so we&amp;rsquo;ll pick the range middle point as value.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.loc[446, &#39;sqft&#39;] = 850
+df.loc[6578, &#39;sqft&#39;] = 750
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.sqft, ax=axes[0])
+sns.kdeplot(df.sqft, ax=axes[1])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223b4b1640&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_20_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df[df.sqft &amp;gt; 5000]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;990&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6B 2Z1&lt;/td&gt;
+      &lt;td&gt;9900.0&lt;/td&gt;
+      &lt;td&gt;-79.426037&lt;/td&gt;
+      &lt;td&gt;43.705619&lt;/td&gt;
+      &lt;td&gt;4.0&lt;/td&gt;
+      &lt;td&gt;4.0&lt;/td&gt;
+      &lt;td&gt;5900.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;5451&lt;/th&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2M 2E4&lt;/td&gt;
+      &lt;td&gt;3800.0&lt;/td&gt;
+      &lt;td&gt;-79.414209&lt;/td&gt;
+      &lt;td&gt;43.787862&lt;/td&gt;
+      &lt;td&gt;5.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;20000.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;5829&lt;/th&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5R 2T8&lt;/td&gt;
+      &lt;td&gt;2000.0&lt;/td&gt;
+      &lt;td&gt;-79.406443&lt;/td&gt;
+      &lt;td&gt;43.672597&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;6700.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;These datapoints seem more genuine (that&amp;rsquo;s one big house, but it&amp;rsquo;s also in North York).&lt;/p&gt;
+&lt;p&gt;We can infer the missing values from the other features using 
+&lt;a href=&#34;https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;iterative imputing&lt;/a&gt;. In short, for each feature with missing data, one can train a regression model on the other features and fill the missing values with the predicted ones.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Infer missing values
+impute_columns = df[[&#39;bedrooms&#39;, &#39;bathrooms&#39;, &#39;sqft&#39;, &#39;latitude&#39;, &#39;longitude&#39;]]
+other_columns = df.drop([&#39;bedrooms&#39;, &#39;bathrooms&#39;, &#39;sqft&#39;, &#39;latitude&#39;, &#39;longitude&#39;], axis=1)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;impute_columns
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.652523&lt;/td&gt;
+      &lt;td&gt;-79.431071&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.686387&lt;/td&gt;
+      &lt;td&gt;-79.571523&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.664503&lt;/td&gt;
+      &lt;td&gt;-79.385247&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.644649&lt;/td&gt;
+      &lt;td&gt;-79.415616&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.780085&lt;/td&gt;
+      &lt;td&gt;-79.411910&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6826&lt;/th&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.657599&lt;/td&gt;
+      &lt;td&gt;-79.383640&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6827&lt;/th&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;900.0&lt;/td&gt;
+      &lt;td&gt;43.667902&lt;/td&gt;
+      &lt;td&gt;-79.375682&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6828&lt;/th&gt;
+      &lt;td&gt;3.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.660670&lt;/td&gt;
+      &lt;td&gt;-79.374276&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6829&lt;/th&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.652770&lt;/td&gt;
+      &lt;td&gt;-79.366487&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6830&lt;/th&gt;
+      &lt;td&gt;4.0&lt;/td&gt;
+      &lt;td&gt;2.0&lt;/td&gt;
+      &lt;td&gt;NaN&lt;/td&gt;
+      &lt;td&gt;43.682418&lt;/td&gt;
+      &lt;td&gt;-79.491092&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;6831 rows × 5 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Instantiate imputer
+imp = IterativeImputer(max_iter=10, random_state=42, initial_strategy=&#39;median&#39;)
+
+# Fit imputer on data
+imp.fit(impute_columns)
+
+# Transform impute_columns
+filled_columns = pd.DataFrame(imp.transform(impute_columns), columns=impute_columns.columns)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;filled_columns
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;1.643610&lt;/td&gt;
+      &lt;td&gt;1.333009&lt;/td&gt;
+      &lt;td&gt;809.493593&lt;/td&gt;
+      &lt;td&gt;43.652523&lt;/td&gt;
+      &lt;td&gt;-79.431071&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;946.382590&lt;/td&gt;
+      &lt;td&gt;43.686387&lt;/td&gt;
+      &lt;td&gt;-79.571523&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;548.168647&lt;/td&gt;
+      &lt;td&gt;43.664503&lt;/td&gt;
+      &lt;td&gt;-79.385247&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;1.617246&lt;/td&gt;
+      &lt;td&gt;1.311559&lt;/td&gt;
+      &lt;td&gt;791.577622&lt;/td&gt;
+      &lt;td&gt;43.644649&lt;/td&gt;
+      &lt;td&gt;-79.415616&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;1.927558&lt;/td&gt;
+      &lt;td&gt;1.525194&lt;/td&gt;
+      &lt;td&gt;972.947696&lt;/td&gt;
+      &lt;td&gt;43.780085&lt;/td&gt;
+      &lt;td&gt;-79.411910&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6826&lt;/th&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;545.054086&lt;/td&gt;
+      &lt;td&gt;43.657599&lt;/td&gt;
+      &lt;td&gt;-79.383640&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6827&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;900.000000&lt;/td&gt;
+      &lt;td&gt;43.667902&lt;/td&gt;
+      &lt;td&gt;-79.375682&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6828&lt;/th&gt;
+      &lt;td&gt;3.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1237.402968&lt;/td&gt;
+      &lt;td&gt;43.660670&lt;/td&gt;
+      &lt;td&gt;-79.374276&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6829&lt;/th&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;539.186295&lt;/td&gt;
+      &lt;td&gt;43.652770&lt;/td&gt;
+      &lt;td&gt;-79.366487&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6830&lt;/th&gt;
+      &lt;td&gt;4.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1716.988502&lt;/td&gt;
+      &lt;td&gt;43.682418&lt;/td&gt;
+      &lt;td&gt;-79.491092&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;6831 rows × 5 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;We should have filled most of our missing data. Let&amp;rsquo;s compare missing values pre and post imputing.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Missing values pre-imputing
+df.isna().sum()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;city              0
+postal_code      21
+price             0
+longitude         0
+latitude          0
+bedrooms        899
+bathrooms      1013
+sqft           5182
+dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Merge filled_columns and other_columns back
+df = pd.merge(filled_columns, other_columns, left_index=True, right_index=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Missing values post-imputing
+df.isna().sum()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;bedrooms        0
+bathrooms       0
+sqft            0
+latitude        0
+longitude       0
+city            0
+postal_code    21
+price           0
+dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.shape
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;(6831, 8)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h4 id=&#34;the-city-and-postal-code-columns&#34;&gt;The city and postal code columns&lt;/h4&gt;
+&lt;p&gt;Finally we look at these two categorical columns.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.city.value_counts()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Toronto        4616
+North York      970
+Scarborough     411
+Etobicoke       386
+York            161
+Vaughan         107
+East York        99
+Mississauga      49
+Markham          30
+Brampton          2
+Name: city, dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.postal_code.value_counts()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;None       57
+M5B 2C2    52
+M5A 1Z4    42
+L4K 2M7    36
+M5A 2Y8    33
+           ..
+M4S 1V5     1
+M6K 2X9     1
+M4B 1K7     1
+M5A 4M8     1
+M5A 1K2     1
+Name: postal_code, Length: 2614, dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The postal code column has missing data entered as &amp;lsquo;None&amp;rsquo; on top of the 21 NaN listed above. We can convert them to NaN and, at this point, we will drop all remaining rows with missing data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Drop remaining rows with missing values
+df = df.replace(&#39;None&#39;, np.NaN)
+df = df.dropna()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.shape
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;(6753, 8)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Finally, the 6 digit postal code seems like it&amp;rsquo;s a bit too granular as we have 2614 distinct entries. We&amp;rsquo;ll extract the first 3 digits of each code to group properties within similar areas.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Extract first 3 digits of postal_code
+df.postal_code = df.postal_code.apply(lambda x: x[:3])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.postal_code.value_counts()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;M5V    1001
+M4Y     456
+M5A     367
+M5J     302
+M2N     299
+       ... 
+m4v       1
+M5Y       1
+A1A       1
+l4X       1
+M3E       1
+Name: postal_code, Length: 115, dtype: int64
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;1.643610&lt;/td&gt;
+      &lt;td&gt;1.333009&lt;/td&gt;
+      &lt;td&gt;809.493593&lt;/td&gt;
+      &lt;td&gt;43.652523&lt;/td&gt;
+      &lt;td&gt;-79.431071&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6J&lt;/td&gt;
+      &lt;td&gt;2999.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;946.382590&lt;/td&gt;
+      &lt;td&gt;43.686387&lt;/td&gt;
+      &lt;td&gt;-79.571523&lt;/td&gt;
+      &lt;td&gt;Etobicoke&lt;/td&gt;
+      &lt;td&gt;M9R&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;548.168647&lt;/td&gt;
+      &lt;td&gt;43.664503&lt;/td&gt;
+      &lt;td&gt;-79.385247&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4Y&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;3&lt;/th&gt;
+      &lt;td&gt;1.617246&lt;/td&gt;
+      &lt;td&gt;1.311559&lt;/td&gt;
+      &lt;td&gt;791.577622&lt;/td&gt;
+      &lt;td&gt;43.644649&lt;/td&gt;
+      &lt;td&gt;-79.415616&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6J&lt;/td&gt;
+      &lt;td&gt;8495.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;4&lt;/th&gt;
+      &lt;td&gt;1.927558&lt;/td&gt;
+      &lt;td&gt;1.525194&lt;/td&gt;
+      &lt;td&gt;972.947696&lt;/td&gt;
+      &lt;td&gt;43.780085&lt;/td&gt;
+      &lt;td&gt;-79.411910&lt;/td&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2N&lt;/td&gt;
+      &lt;td&gt;1200.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6826&lt;/th&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;545.054086&lt;/td&gt;
+      &lt;td&gt;43.657599&lt;/td&gt;
+      &lt;td&gt;-79.383640&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5G&lt;/td&gt;
+      &lt;td&gt;2400.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6827&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;900.000000&lt;/td&gt;
+      &lt;td&gt;43.667902&lt;/td&gt;
+      &lt;td&gt;-79.375682&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4X&lt;/td&gt;
+      &lt;td&gt;2975.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6828&lt;/th&gt;
+      &lt;td&gt;3.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1237.402968&lt;/td&gt;
+      &lt;td&gt;43.660670&lt;/td&gt;
+      &lt;td&gt;-79.374276&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A&lt;/td&gt;
+      &lt;td&gt;3195.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6829&lt;/th&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;539.186295&lt;/td&gt;
+      &lt;td&gt;43.652770&lt;/td&gt;
+      &lt;td&gt;-79.366487&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A&lt;/td&gt;
+      &lt;td&gt;2150.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6830&lt;/th&gt;
+      &lt;td&gt;4.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1716.988502&lt;/td&gt;
+      &lt;td&gt;43.682418&lt;/td&gt;
+      &lt;td&gt;-79.491092&lt;/td&gt;
+      &lt;td&gt;York&lt;/td&gt;
+      &lt;td&gt;M6N&lt;/td&gt;
+      &lt;td&gt;2500.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;6753 rows × 8 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;22-visualisations&#34;&gt;2.2. Visualisations&lt;/h3&gt;
+&lt;h4 id=&#34;price-distribution&#34;&gt;Price distribution&lt;/h4&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.price, ax=axes[0])
+sns.kdeplot(df.price, ax=axes[1])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223b347d90&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_44_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;There are some clear price outliers. Let&amp;rsquo;s fix this by dropping the first and last 5% quantiles of price data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# drop the first and last 5% quantiles
+df = df[df.price.between(df.price.quantile(0.05), df.price.quantile(0.95))]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.price, ax=axes[0])
+sns.kdeplot(df.price, ax=axes[1])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223b2f1d00&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_47_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df[df.price &amp;gt;= 3500]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;15&lt;/th&gt;
+      &lt;td&gt;3.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1332.060845&lt;/td&gt;
+      &lt;td&gt;43.640527&lt;/td&gt;
+      &lt;td&gt;-79.397104&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5V&lt;/td&gt;
+      &lt;td&gt;3800.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;19&lt;/th&gt;
+      &lt;td&gt;3.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1331.951335&lt;/td&gt;
+      &lt;td&gt;43.685292&lt;/td&gt;
+      &lt;td&gt;-79.319300&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4C&lt;/td&gt;
+      &lt;td&gt;3750.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;43&lt;/th&gt;
+      &lt;td&gt;3.000000&lt;/td&gt;
+      &lt;td&gt;4.000000&lt;/td&gt;
+      &lt;td&gt;1584.904699&lt;/td&gt;
+      &lt;td&gt;43.781543&lt;/td&gt;
+      &lt;td&gt;-79.405602&lt;/td&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2N&lt;/td&gt;
+      &lt;td&gt;3600.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;79&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;995.672755&lt;/td&gt;
+      &lt;td&gt;43.671801&lt;/td&gt;
+      &lt;td&gt;-79.387633&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4W&lt;/td&gt;
+      &lt;td&gt;3800.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;117&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;989.526746&lt;/td&gt;
+      &lt;td&gt;43.655180&lt;/td&gt;
+      &lt;td&gt;-79.389638&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5T&lt;/td&gt;
+      &lt;td&gt;3500.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6645&lt;/th&gt;
+      &lt;td&gt;1.593235&lt;/td&gt;
+      &lt;td&gt;1.291247&lt;/td&gt;
+      &lt;td&gt;774.670649&lt;/td&gt;
+      &lt;td&gt;43.638332&lt;/td&gt;
+      &lt;td&gt;-79.397831&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5V&lt;/td&gt;
+      &lt;td&gt;3500.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6663&lt;/th&gt;
+      &lt;td&gt;1.706047&lt;/td&gt;
+      &lt;td&gt;1.370630&lt;/td&gt;
+      &lt;td&gt;841.911221&lt;/td&gt;
+      &lt;td&gt;43.685679&lt;/td&gt;
+      &lt;td&gt;-79.404689&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M4V&lt;/td&gt;
+      &lt;td&gt;3500.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6781&lt;/th&gt;
+      &lt;td&gt;3.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1336.474829&lt;/td&gt;
+      &lt;td&gt;43.658836&lt;/td&gt;
+      &lt;td&gt;-79.384655&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5G&lt;/td&gt;
+      &lt;td&gt;3500.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6786&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;993.051122&lt;/td&gt;
+      &lt;td&gt;43.665517&lt;/td&gt;
+      &lt;td&gt;-79.387096&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5S&lt;/td&gt;
+      &lt;td&gt;3500.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6812&lt;/th&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;985.164964&lt;/td&gt;
+      &lt;td&gt;43.638521&lt;/td&gt;
+      &lt;td&gt;-79.399464&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5V&lt;/td&gt;
+      &lt;td&gt;3500.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;197 rows × 8 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df[df.price &amp;lt;= 1700]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;city&lt;/th&gt;
+      &lt;th&gt;postal_code&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;189&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;800.000000&lt;/td&gt;
+      &lt;td&gt;43.663109&lt;/td&gt;
+      &lt;td&gt;-79.375154&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A&lt;/td&gt;
+      &lt;td&gt;1659.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;196&lt;/th&gt;
+      &lt;td&gt;2.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;800.000000&lt;/td&gt;
+      &lt;td&gt;43.718479&lt;/td&gt;
+      &lt;td&gt;-79.260475&lt;/td&gt;
+      &lt;td&gt;Scarborough&lt;/td&gt;
+      &lt;td&gt;M1K&lt;/td&gt;
+      &lt;td&gt;1600.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;208&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;594.808222&lt;/td&gt;
+      &lt;td&gt;43.764094&lt;/td&gt;
+      &lt;td&gt;-79.415858&lt;/td&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2N&lt;/td&gt;
+      &lt;td&gt;1650.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;215&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;560.000000&lt;/td&gt;
+      &lt;td&gt;43.614332&lt;/td&gt;
+      &lt;td&gt;-79.487306&lt;/td&gt;
+      &lt;td&gt;Etobicoke&lt;/td&gt;
+      &lt;td&gt;M8V&lt;/td&gt;
+      &lt;td&gt;1700.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;218&lt;/th&gt;
+      &lt;td&gt;1.63832&lt;/td&gt;
+      &lt;td&gt;1.317654&lt;/td&gt;
+      &lt;td&gt;797.502978&lt;/td&gt;
+      &lt;td&gt;43.663109&lt;/td&gt;
+      &lt;td&gt;-79.375154&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M5A&lt;/td&gt;
+      &lt;td&gt;1659.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6480&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;550.000000&lt;/td&gt;
+      &lt;td&gt;43.669195&lt;/td&gt;
+      &lt;td&gt;-79.452815&lt;/td&gt;
+      &lt;td&gt;Toronto&lt;/td&gt;
+      &lt;td&gt;M6N&lt;/td&gt;
+      &lt;td&gt;1600.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6484&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;600.000000&lt;/td&gt;
+      &lt;td&gt;43.609696&lt;/td&gt;
+      &lt;td&gt;-79.592960&lt;/td&gt;
+      &lt;td&gt;Mississauga&lt;/td&gt;
+      &lt;td&gt;L4Y&lt;/td&gt;
+      &lt;td&gt;1699.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6521&lt;/th&gt;
+      &lt;td&gt;2.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;920.770784&lt;/td&gt;
+      &lt;td&gt;43.794746&lt;/td&gt;
+      &lt;td&gt;-79.273062&lt;/td&gt;
+      &lt;td&gt;Scarborough&lt;/td&gt;
+      &lt;td&gt;M1S&lt;/td&gt;
+      &lt;td&gt;1650.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6561&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;589.380038&lt;/td&gt;
+      &lt;td&gt;43.786449&lt;/td&gt;
+      &lt;td&gt;-79.353657&lt;/td&gt;
+      &lt;td&gt;North York&lt;/td&gt;
+      &lt;td&gt;M2J&lt;/td&gt;
+      &lt;td&gt;1600.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6630&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;550.865882&lt;/td&gt;
+      &lt;td&gt;43.601470&lt;/td&gt;
+      &lt;td&gt;-79.505850&lt;/td&gt;
+      &lt;td&gt;Etobicoke&lt;/td&gt;
+      &lt;td&gt;M8V&lt;/td&gt;
+      &lt;td&gt;1650.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;221 rows × 8 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;np.mean(df.price)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;2353.290710915894
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;np.std(df.price)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;474.7314238176986
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.shape
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;(6147, 8)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h4 id=&#34;location-distribution&#34;&gt;Location distribution&lt;/h4&gt;
+&lt;p&gt;Since we have the Latitude/Longitude data, we can see where our datapoints are situated. We can use 
+&lt;a href=&#34;https://geopandas.org/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;geopandas&lt;/a&gt; to overlay a scatterplot onto a plot of Toronto, or of the Greater Toronto Area.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;toronto_map = gpd.read_file(&amp;quot;./data/shapefiles/toronto/CENTRELINE_WGS84.shp&amp;quot;)
+gta_map = gpd.read_file(&amp;quot;./data/shapefiles/gta/GTA2013_Index.shp&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let&amp;rsquo;s look at where our data is situated within the GTA.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, ax = plt.subplots(figsize=(15, 15))
+
+gta_map.plot(ax=ax, alpha=0.3, color=&#39;grey&#39;)
+sns.scatterplot(df.longitude, df.latitude, ax=ax, hue=df.price, palette=&#39;RdYlGn_r&#39;)
+ax.set_title(&#39;Distribution of rent prices data across the Greater Toronto Area&#39;)
+ax.set_xlabel(&#39;Longitude&#39;)
+ax.set_ylabel(&#39;Latitude&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Text(109.3490879304675, 0.5, &#39;Latitude&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_56_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;Now let&amp;rsquo;s look at Toronto proper.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, ax = plt.subplots(figsize=(15, 15))
+
+toronto_map.plot(ax=ax, alpha=0.2, color=&#39;grey&#39;)
+sns.scatterplot(df.longitude, df.latitude, ax=ax, hue=df.price, palette=&#39;RdYlGn_r&#39;)
+ax.set_title(&#39;Distribution of rent prices data across Toronto&#39;)
+ax.set_xlabel(&#39;Longitude&#39;)
+ax.set_ylabel(&#39;Latitude&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Text(95.5, 0.5, &#39;Latitude&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_58_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;There are some clear concentrations of high rent places around downtown Toronto and the North York area, while rent seems to get cheaper as you go further west/east of Toronto.&lt;/p&gt;
+&lt;p&gt;Next, let&amp;rsquo;s look at the distribution of postal codes.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;postal_codes = df.postal_code.value_counts()
+
+fig, ax = plt.subplots(figsize=(20, 20))
+sns.barplot(x=postal_codes, y=postal_codes.index)
+ax.set_xlabel(&#39;Postal code frequency&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Text(0.5, 0, &#39;Postal code frequency&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_60_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;Looking up these postal codes, we again see that the data seems heavily concentrated downtown and in North York. Let&amp;rsquo;s look at the  6 most frequent postal codes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://www.google.com/maps/place/Toronto,&amp;#43;ON&amp;#43;M5V/@43.6314062,-79.4116401,14z/data=!3m1!4b1!4m5!3m4!1s0x882b35252b71ef0d:0xee11d2dff47e9a1!8m2!3d43.6289467!4d-79.3944199&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;M5V&lt;/a&gt; : Fashion/Entertainment District &amp;amp; Toronto Islands&lt;/li&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://www.google.com/maps/place/Toronto,&amp;#43;ON&amp;#43;M4Y/@43.6666517,-79.3903063,15z/data=!3m1!4b1!4m5!3m4!1s0x882b34b2c1714f89:0xd093238d56b31c9c!8m2!3d43.6658599!4d-79.3831599&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;M4Y&lt;/a&gt; : Church &amp;amp; Wellesley Area&lt;/li&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://www.google.com/maps/place/Toronto,&amp;#43;ON&amp;#43;M5A/@43.6499487,-79.3878643,13z/data=!3m1!4b1!4m5!3m4!1s0x89d4cb16c81cbaa7:0x33cea1547f0c5278!8m2!3d43.6542599!4d-79.3606359&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;M5A&lt;/a&gt; : Corktown &amp;amp; Cabbagetown South Area&lt;/li&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://www.google.com/maps/place/North&amp;#43;York,&amp;#43;ON&amp;#43;M2N/@43.7681432,-79.448698,13z/data=!3m1!4b1!4m5!3m4!1s0x882b2d6fd314b9eb:0x2f13d8da0be397e4!8m2!3d43.7701199!4d-79.4084928&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;M2N&lt;/a&gt; : North York - Willowdale Area&lt;/li&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://www.google.com/maps/place/Toronto,&amp;#43;ON&amp;#43;M5J/@43.6297434,-79.4014638,13z/data=!4m5!3m4!1s0x89d4cada7048225d:0x8ff689c9a9de81d0!8m2!3d43.6408157!4d-79.3817523&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;M5J&lt;/a&gt; : Waterfront &amp;amp; Toronto Islands&lt;/li&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://www.google.com/maps/place/Toronto,&amp;#43;ON&amp;#43;M5B/@43.6530176,-79.3988573,14.1z/data=!4m5!3m4!1s0x89d4cb356600009f:0x5815e4db84791f34!8m2!3d43.6571618!4d-79.3789371&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;M5B&lt;/a&gt; : Ryerson University Area&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Next, let&amp;rsquo;s look at the longtitude/latitude distributions.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, axes = plt.subplots(1, 2, figsize=(15,5))
+
+sns.boxplot(df.longitude, ax=axes[0])
+sns.kdeplot(df.longitude, ax=axes[1])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7f222209b6d0&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_62_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;fig, axes = plt.subplots(1, 2, figsize=(15,5))
+
+sns.boxplot(df.latitude, ax=axes[0])
+sns.kdeplot(df.latitude, ax=axes[1])
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;matplotlib.axes._subplots.AxesSubplot at 0x7f222207b3d0&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_63_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;It&amp;rsquo;s clear our data is concentrated in a vertical corridor centered on downtown. We also see small bumps in the Yonge/Eglinton and North York areas on the latitude plots.&lt;/p&gt;
+&lt;h4 id=&#34;features-scatter-matrix&#34;&gt;Features scatter matrix&lt;/h4&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;sns.pairplot(df.sample(500), hue=&#39;price&#39;, diag_kind=&#39;hist&#39;, palette=&#39;RdYlGn_r&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;seaborn.axisgrid.PairGrid at 0x7f22220f4640&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_66_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
+&lt;h3 id=&#34;23-onehotencode&#34;&gt;2.3. OneHotEncode&lt;/h3&gt;
+&lt;p&gt;Finally we encode categorical features (city, postal code) as 0/1 variables.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Split categorical from numerical data
+df_categorical = df.select_dtypes(include=[object])
+df_numerical = df.drop(columns=df_categorical.columns, axis=1)
+    
+# Fit one-hot encoder on categorical data
+onehot = OneHotEncoder(handle_unknown=&#39;ignore&#39;)
+onehot.fit(df_categorical)
+
+# Transform categorical data
+df_onehot = pd.DataFrame(onehot.transform(df_categorical).toarray(), 
+                         columns=onehot.get_feature_names(),
+                         index=df_categorical.index)
+
+# Merge data
+df = pd.merge(df_numerical, df_onehot, left_index=True, right_index=True)
+
+# Display
+df
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;price&lt;/th&gt;
+      &lt;th&gt;x0_Brampton&lt;/th&gt;
+      &lt;th&gt;x0_East York&lt;/th&gt;
+      &lt;th&gt;x0_Etobicoke&lt;/th&gt;
+      &lt;th&gt;x0_Markham&lt;/th&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;th&gt;x1_M9M&lt;/th&gt;
+      &lt;th&gt;x1_M9N&lt;/th&gt;
+      &lt;th&gt;x1_M9P&lt;/th&gt;
+      &lt;th&gt;x1_M9R&lt;/th&gt;
+      &lt;th&gt;x1_M9V&lt;/th&gt;
+      &lt;th&gt;x1_M9W&lt;/th&gt;
+      &lt;th&gt;x1_l4X&lt;/th&gt;
+      &lt;th&gt;x1_m4g&lt;/th&gt;
+      &lt;th&gt;x1_m4v&lt;/th&gt;
+      &lt;th&gt;x1_m6h&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;1.64361&lt;/td&gt;
+      &lt;td&gt;1.333009&lt;/td&gt;
+      &lt;td&gt;809.493593&lt;/td&gt;
+      &lt;td&gt;43.652523&lt;/td&gt;
+      &lt;td&gt;-79.431071&lt;/td&gt;
+      &lt;td&gt;2999.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1&lt;/th&gt;
+      &lt;td&gt;2.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;946.382590&lt;/td&gt;
+      &lt;td&gt;43.686387&lt;/td&gt;
+      &lt;td&gt;-79.571523&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;2&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;548.168647&lt;/td&gt;
+      &lt;td&gt;43.664503&lt;/td&gt;
+      &lt;td&gt;-79.385247&lt;/td&gt;
+      &lt;td&gt;1950.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;5&lt;/th&gt;
+      &lt;td&gt;2.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;894.076951&lt;/td&gt;
+      &lt;td&gt;43.661927&lt;/td&gt;
+      &lt;td&gt;-79.386511&lt;/td&gt;
+      &lt;td&gt;2500.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6&lt;/th&gt;
+      &lt;td&gt;3.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1275.463512&lt;/td&gt;
+      &lt;td&gt;43.717287&lt;/td&gt;
+      &lt;td&gt;-79.441846&lt;/td&gt;
+      &lt;td&gt;2450.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6826&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;545.054086&lt;/td&gt;
+      &lt;td&gt;43.657599&lt;/td&gt;
+      &lt;td&gt;-79.383640&lt;/td&gt;
+      &lt;td&gt;2400.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6827&lt;/th&gt;
+      &lt;td&gt;2.00000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;900.000000&lt;/td&gt;
+      &lt;td&gt;43.667902&lt;/td&gt;
+      &lt;td&gt;-79.375682&lt;/td&gt;
+      &lt;td&gt;2975.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6828&lt;/th&gt;
+      &lt;td&gt;3.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;1237.402968&lt;/td&gt;
+      &lt;td&gt;43.660670&lt;/td&gt;
+      &lt;td&gt;-79.374276&lt;/td&gt;
+      &lt;td&gt;3195.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6829&lt;/th&gt;
+      &lt;td&gt;1.00000&lt;/td&gt;
+      &lt;td&gt;1.000000&lt;/td&gt;
+      &lt;td&gt;539.186295&lt;/td&gt;
+      &lt;td&gt;43.652770&lt;/td&gt;
+      &lt;td&gt;-79.366487&lt;/td&gt;
+      &lt;td&gt;2150.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th&gt;6830&lt;/th&gt;
+      &lt;td&gt;4.00000&lt;/td&gt;
+      &lt;td&gt;2.000000&lt;/td&gt;
+      &lt;td&gt;1716.988502&lt;/td&gt;
+      &lt;td&gt;43.682418&lt;/td&gt;
+      &lt;td&gt;-79.491092&lt;/td&gt;
+      &lt;td&gt;2500.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;6147 rows × 130 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&#34;24-store-clean-dataset&#34;&gt;2.4. Store clean dataset&lt;/h3&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;df.to_csv(&amp;quot;./data/toronto_apartment_rentals_2020_clean.csv&amp;quot;, index=False)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;3-model-selection&#34;&gt;3. Model selection&lt;/h2&gt;
+&lt;p&gt;We now try to predict the price based on the remaining features.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Load clean dataset
+df = pd.read_csv(&amp;quot;./data/toronto_apartment_rentals_2020_clean.csv&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Split into labels and features
+y = df.price
+X = df.drop(&#39;price&#39;, axis=1)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;31-algorithms-comparison&#34;&gt;3.1. Algorithms comparison&lt;/h3&gt;
+&lt;p&gt;We&amp;rsquo;ll try out Lasso Regression, K-Nearest Neighbors Regression and XGBoost (a.k.a. Extreme Gradient Boosting Machines). For each model, we&amp;rsquo;ll use RandomizedSearchCV to tune their parameters and then pick the best one.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# Collecting models and their parameter grids to optimise over.
+
+models = {
+    &#39;lasso&#39;: {
+        &#39;name&#39;: &#39;Lasso Regression&#39;,
+        &#39;model&#39;: Lasso,
+        &#39;param_grid&#39;: {
+            &#39;alpha&#39;: [0.1, 1, 10],
+            &#39;normalize&#39;: [True, False]
+        }
+    },
+    
+    &#39;knn&#39;: {
+        &#39;name&#39;: &#39;K-Nearest Neighbors&#39;,
+        &#39;model&#39;: KNeighborsRegressor,
+        &#39;param_grid&#39;: {
+            &#39;n_neighbors&#39;: list(range(1, 21)),
+            &#39;p&#39;: [1, 2, 3]
+        }
+    },
+    
+    &#39;xgb&#39;: {
+        &#39;name&#39;: &#39;XGBoost&#39;,
+        &#39;model&#39;: XGBRegressor,
+        &#39;param_grid&#39;: {
+            &amp;quot;colsample_bytree&amp;quot;: uniform(0.7, 0.3),
+            &amp;quot;gamma&amp;quot;: uniform(0, 0.5),
+            &amp;quot;learning_rate&amp;quot;: uniform(0.03, 0.3), 
+            &amp;quot;max_depth&amp;quot;: randint(2, 6), 
+            &amp;quot;n_estimators&amp;quot;: randint(100, 400), 
+            &amp;quot;subsample&amp;quot;: uniform(0.6, 0.4),
+            &amp;quot;objective&amp;quot;: [&amp;quot;reg:squarederror&amp;quot;],
+            &amp;quot;random_state&amp;quot;: [42]
+        } 
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;To train and compare models, we&amp;rsquo;ll use the helper function below.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def train_and_pick_best_model(models, features, labels, n_iter=10, verbose=False):
+    &amp;quot;&amp;quot;&amp;quot;Train and tune a collection of models via RandomizedSearchCV and return 
+    the best one, fitted on a training set.
+    
+    Args:
+        models (dict): a dictionary of models containing model name, class constructor and params grid.
+        features (dataframe): features to train models.
+        labels (series): labels to predict.
+        n_iter (int): number of iterations for RandomizedSearchCV, 
+                      increase for gain of accuracy vs loss of training speed.
+        verbose (bool): Set to true to print model info as they are trained/evaluated.
+        
+    Returns:
+        fitted model trained with best RandomizedSearchCV params.
+    &amp;quot;&amp;quot;&amp;quot;
+    
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.1, random_state=42)
+
+    # Keep record of best model found
+    best_model = {
+        &#39;fitted_instance&#39;: None,
+        &#39;R2_train_score&#39;: None,
+        &#39;R2_test_score&#39;: None,
+        &#39;RMSE_train_score&#39;: None,
+        &#39;RMSE_test_score&#39;: None,
+        &#39;name&#39;: None,
+        &#39;params&#39;: None
+    }
+    
+    for m in models:
+        # Train and tune model via RandomizedSearchCV
+        model = models[m][&#39;model&#39;]()
+        param_grid = models[m][&#39;param_grid&#39;]
+        reg = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=n_iter, random_state=42)
+        reg.fit(X_train, y_train)
+
+        # Collect model info/scores
+        R2_train_score = reg.score(X_train, y_train)
+        R2_test_score = reg.score(X_test, y_test)
+        RMSE_train_score = mean_squared_error(y_train, reg.predict(X_train), squared=False)
+        RMSE_test_score = mean_squared_error(y_test, reg.predict(X_test), squared=False)
+        best_params = reg.best_params_
+        
+        # Print model information
+        if verbose:
+            print(&amp;quot;-&amp;quot;*115)
+            print(&amp;quot;Model: {}&amp;quot;.format(models[m][&#39;name&#39;]))
+            print(&amp;quot;R^2 train score:  {:.3f}&amp;quot;.format(R2_train_score))
+            print(&amp;quot;R^2 test score:   {:.3f}&amp;quot;.format(R2_test_score))
+            print(&amp;quot;RMSE train score: {:.2f}&amp;quot;.format(RMSE_train_score))
+            print(&amp;quot;RMSE test score:  {:.2f}&amp;quot;.format(RMSE_test_score))
+            print(&amp;quot;Best params: {}&amp;quot;.format(best_params))
+        
+        # Update best model found so far
+        if not best_model[&#39;fitted_instance&#39;] or R2_test_score &amp;gt; best_model[&#39;R2_test_score&#39;]:
+            best_model.update({
+                &#39;fitted_instance&#39;: reg,
+                &#39;R2_train_score&#39;: R2_train_score,
+                &#39;R2_test_score&#39;: R2_test_score,
+                &#39;RMSE_train_score&#39;: RMSE_train_score, 
+                &#39;RMSE_test_score&#39;: RMSE_test_score,
+                &#39;params&#39;: best_params,
+                &#39;name&#39;: models[m][&#39;name&#39;]
+            })
+
+    # Print best model info
+    if verbose:
+        print(&amp;quot;=&amp;quot;*115)
+        print(&amp;quot;Best model: {}&amp;quot;.format(best_model[&#39;name&#39;]))
+        print(&amp;quot;R^2 train score:  {:.3f}&amp;quot;.format(best_model[&#39;R2_train_score&#39;]))
+        print(&amp;quot;R^2 test score:   {:.3f}&amp;quot;.format(best_model[&#39;R2_test_score&#39;]))
+        print(&amp;quot;RMSE train score: {:.2f}&amp;quot;.format(best_model[&#39;RMSE_train_score&#39;]))
+        print(&amp;quot;RMSE test score:  {:.2f}&amp;quot;.format(best_model[&#39;RMSE_test_score&#39;]))
+        print(&amp;quot;Params: {}&amp;quot;.format(best_model[&#39;params&#39;]))
+    
+    return best_model[&#39;fitted_instance&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# This should take about a minute
+reg = train_and_pick_best_model(models=models, features=X, labels=y, n_iter = 20, verbose=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;-------------------------------------------------------------------------------------------------------------------
+Model: Lasso Regression
+R^2 train score:  0.591
+R^2 test score:   0.619
+RMSE train score: 302.49
+RMSE test score:  302.14
+Best params: {&#39;normalize&#39;: False, &#39;alpha&#39;: 0.1}
+-------------------------------------------------------------------------------------------------------------------
+Model: K-Nearest Neighbors
+R^2 train score:  0.700
+R^2 test score:   0.619
+RMSE train score: 258.98
+RMSE test score:  302.06
+Best params: {&#39;p&#39;: 1, &#39;n_neighbors&#39;: 5}
+-------------------------------------------------------------------------------------------------------------------
+Model: XGBoost
+R^2 train score:  0.772
+R^2 test score:   0.714
+RMSE train score: 225.65
+RMSE test score:  262.02
+Best params: {&#39;colsample_bytree&#39;: 0.7121300768615294, &#39;gamma&#39;: 0.3553314448428937, &#39;learning_rate&#39;: 0.0632672462435494, &#39;max_depth&#39;: 5, &#39;n_estimators&#39;: 278, &#39;objective&#39;: &#39;reg:squarederror&#39;, &#39;random_state&#39;: 42, &#39;subsample&#39;: 0.6125716742746937}
+===================================================================================================================
+Best model: XGBoost
+R^2 train score:  0.772
+R^2 test score:   0.714
+RMSE train score: 225.65
+RMSE test score:  262.02
+Params: {&#39;colsample_bytree&#39;: 0.7121300768615294, &#39;gamma&#39;: 0.3553314448428937, &#39;learning_rate&#39;: 0.0632672462435494, &#39;max_depth&#39;: 5, &#39;n_estimators&#39;: 278, &#39;objective&#39;: &#39;reg:squarederror&#39;, &#39;random_state&#39;: 42, &#39;subsample&#39;: 0.6125716742746937}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;32-make-a-prediction-based-on-user-input&#34;&gt;3.2. Make a prediction based on user input&lt;/h3&gt;
+&lt;p&gt;At this point we have a trained regression model, and we want to use it to make predictions. We&amp;rsquo;ll want to accept user input in the original format for our data, and then transform it using the original Imputer and OneHotEncoder which we used to transform our data.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;user_input = {
+    &#39;bedrooms&#39;: 1.0,
+    &#39;bathrooms&#39;: 1.0,
+    &#39;sqft&#39;: 950,
+    &#39;latitude&#39;: np.NaN,
+    &#39;longitude&#39;: np.NaN,
+    &#39;city&#39;: &amp;quot;Toronto&amp;quot;,
+    &#39;postal_code&#39;: &amp;quot;M6R&amp;quot;, 
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;def transform_user_input(input_dict):
+    &amp;quot;&amp;quot;&amp;quot;Prepare user input for prediction using Imputer and OneHotEncoder transformers.&amp;quot;&amp;quot;&amp;quot;
+    
+    columns = [&#39;bedrooms&#39;, &#39;bathrooms&#39;, &#39;sqft&#39;,&#39;latitude&#39;,&#39;longitude&#39;,&#39;city&#39;,&#39;postal_code&#39;]
+    df = pd.DataFrame(input_dict, columns=columns, index=[0])
+    
+    # Split into categorical and numerical columns
+    df_numerical = df[[&#39;bedrooms&#39;, &#39;bathrooms&#39;, &#39;sqft&#39;, &#39;latitude&#39;, &#39;longitude&#39;]]    
+    df_categorical = df[[&#39;city&#39;, &#39;postal_code&#39;]]
+    
+    # Impute missing values in the numerical columns
+    # These are: bedrooms, bathrooms, sqft, latitude, longitude
+    df_impute = pd.DataFrame(imp.transform(df_numerical), 
+                             columns=df_numerical.columns)
+    
+    # Onehot encode categorical values
+    df_onehot = pd.DataFrame(onehot.transform(df_categorical).toarray(), 
+                             columns=onehot.get_feature_names())
+
+    # Return merged dataframe
+    return pd.merge(df_impute, df_onehot, left_index=True, right_index=True)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;user_input = transform_user_input(user_input)
+user_input
+&lt;/code&gt;&lt;/pre&gt;
+&lt;div&gt;
+&lt;style scoped&gt;
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&lt;pre&gt;&lt;code&gt;.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;/style&gt;&lt;/p&gt;
+&lt;table border=&#34;1&#34; class=&#34;dataframe&#34;&gt;
+  &lt;thead&gt;
+    &lt;tr style=&#34;text-align: right;&#34;&gt;
+      &lt;th&gt;&lt;/th&gt;
+      &lt;th&gt;bedrooms&lt;/th&gt;
+      &lt;th&gt;bathrooms&lt;/th&gt;
+      &lt;th&gt;sqft&lt;/th&gt;
+      &lt;th&gt;latitude&lt;/th&gt;
+      &lt;th&gt;longitude&lt;/th&gt;
+      &lt;th&gt;x0_Brampton&lt;/th&gt;
+      &lt;th&gt;x0_East York&lt;/th&gt;
+      &lt;th&gt;x0_Etobicoke&lt;/th&gt;
+      &lt;th&gt;x0_Markham&lt;/th&gt;
+      &lt;th&gt;x0_Mississauga&lt;/th&gt;
+      &lt;th&gt;...&lt;/th&gt;
+      &lt;th&gt;x1_M9M&lt;/th&gt;
+      &lt;th&gt;x1_M9N&lt;/th&gt;
+      &lt;th&gt;x1_M9P&lt;/th&gt;
+      &lt;th&gt;x1_M9R&lt;/th&gt;
+      &lt;th&gt;x1_M9V&lt;/th&gt;
+      &lt;th&gt;x1_M9W&lt;/th&gt;
+      &lt;th&gt;x1_l4X&lt;/th&gt;
+      &lt;th&gt;x1_m4g&lt;/th&gt;
+      &lt;th&gt;x1_m4v&lt;/th&gt;
+      &lt;th&gt;x1_m6h&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th&gt;0&lt;/th&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;1.0&lt;/td&gt;
+      &lt;td&gt;950.0&lt;/td&gt;
+      &lt;td&gt;43.679707&lt;/td&gt;
+      &lt;td&gt;-79.399019&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;...&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+      &lt;td&gt;0.0&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;1 rows × 129 columns&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;At this point we can make a prediction.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;reg.predict(user_input)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;array([2141.0542], dtype=float32)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h4 id=&#34;handle-new-categorical-inputs&#34;&gt;Handle new categorical inputs&lt;/h4&gt;
+&lt;p&gt;When initiating our OneHotEncoder, we set it to ignore unknown categorical values. This means the transformer sets them to 0, and our model can make a prediction from there (although not being aided by the additional data in that feature).&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;new_input = {
+    &#39;bedrooms&#39;: 1.0,
+    &#39;bathrooms&#39;: 1.0,
+    &#39;sqft&#39;: np.NaN,
+    &#39;latitude&#39;: np.NaN,
+    &#39;longitude&#39;: np.NaN,
+    &#39;city&#39;: &amp;quot;New York&amp;quot;,
+    &#39;postal_code&#39;: &amp;quot;BABASTART&amp;quot;, 
+}
+
+reg.predict(transform_user_input(new_input))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;array([2074.4036], dtype=float32)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;4-model-deployment&#34;&gt;4. Model deployment&lt;/h2&gt;
+&lt;h3 id=&#34;41-save-our-model-and-transformers&#34;&gt;4.1. Save our model and transformers&lt;/h3&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;joblib.dump(reg, &amp;quot;./model/model.pkl&amp;quot;)
+joblib.dump(imp, &amp;quot;./model/imp.pkl&amp;quot;)
+joblib.dump(onehot, &amp;quot;./model/onehot.pkl&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;[&#39;./model/onehot.pkl&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;42-deploy-to-heroku&#34;&gt;4.2. Deploy to Heroku&lt;/h3&gt;
+&lt;p&gt;At this point we can deploy our model. See &lt;a href=&#34;https://predict-toronto-rent.herokuapp.com/&#34;&gt;https://predict-toronto-rent.herokuapp.com/&lt;/a&gt; for a live version on the Heroku platform!&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Space Basketball Probability</title>
