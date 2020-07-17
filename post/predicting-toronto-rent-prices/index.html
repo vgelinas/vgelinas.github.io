@@ -1,0 +1,2943 @@
+<!DOCTYPE html><html lang="en-us" >
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Vincent Gélinas">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="In this jupyter notebook, we go through an end-to-end machine learning project and build a predictive model for Toronto apartment rent prices.">
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://vgelinas.github.io/post/predicting-toronto-rent-prices/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="hsl(339, 90%, 68%)">
+  
+
+  
+  
+  
+  <script src="/js/mathjax-config.js"></script>
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light" disabled>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark">
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" integrity="" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+  
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="https://vgelinas.github.io/post/predicting-toronto-rent-prices/">
+
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="Vincent Gélinas">
+  <meta property="og:url" content="https://vgelinas.github.io/post/predicting-toronto-rent-prices/">
+  <meta property="og:title" content="Predicting Toronto Rent Prices | Vincent Gélinas">
+  <meta property="og:description" content="In this jupyter notebook, we go through an end-to-end machine learning project and build a predictive model for Toronto apartment rent prices."><meta property="og:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
+  <meta property="twitter:image" content="https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2020-07-15T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2020-07-15T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://vgelinas.github.io/post/predicting-toronto-rent-prices/"
+  },
+  "headline": "Predicting Toronto Rent Prices",
+  
+  "datePublished": "2020-07-15T00:00:00Z",
+  "dateModified": "2020-07-15T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Vincent Gélinas"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Vincent Gélinas",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://vgelinas.github.io/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "In this jupyter notebook, we go through an end-to-end machine learning project and build a predictive model for Toronto apartment rent prices."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Predicting Toronto Rent Prices | Vincent Gélinas</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="dark">
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Vincent Gélinas</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about"><span>About</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Predicting Toronto Rent Prices</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    Jul 15, 2020
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    18 min read
+  </span>
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      <p>In this Python jupyter notebook we will go through an end-to-end machine learning project and build a predictive model for apartment rent prices in Toronto. This is a classic regression task, and we will go through the following:</p>
+<ol>
+<li>Data collection.</li>
+<li>Data preparation &amp; feature engineering.</li>
+<li>Model selection and evaluation.</li>
+<li>Deployment.</li>
+</ol>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_58_1.png" alt="png"></p>
+<p>See the 
+<a href="https://github.com/vgelinas/data-projects/" target="_blank" rel="noopener">Github</a> repository for this project&rsquo;s notebook, datasets and additional scripts.</p>
+<h4 id="required-libraries">Required libraries</h4>
+<pre><code class="language-python"># General libraries
+import pandas as pd
+import numpy as np
+from scipy.stats import uniform, randint
+
+# Visualisations
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import seaborn as sns
+%matplotlib inline
+
+# Data preprocessing and transformers
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from sklearn.preprocessing import OneHotEncoder
+
+# Model selection
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.linear_model import Lasso
+from sklearn.neighbors import KNeighborsRegressor
+from xgboost import XGBRegressor
+
+# Evaluate regression models
+from sklearn.metrics import mean_squared_error
+</code></pre>
+<h2 id="1-data-collection">1. Data collection</h2>
+<p>The data was scraped from the rental site <a href="https://www.rentals.ca/">https://www.rentals.ca/</a> and consists of ~6800 data points with 13 columns:</p>
+<ul>
+<li>price (per month)</li>
+<li>city</li>
+<li>street address</li>
+<li>postal code</li>
+<li>longitude</li>
+<li>latitude</li>
+<li>rental type</li>
+<li>number of bedrooms</li>
+<li>number of bathrooms</li>
+<li>sqft</li>
+<li>text description</li>
+<li>year built</li>
+<li>number of parking spots</li>
+</ul>
+</br>
+<h2 id="2-data-preparation">2. Data preparation</h2>
+<h3 id="21-exploration--feature-engineering">2.1. Exploration &amp; feature engineering</h3>
+<p>Let&rsquo;s take a first look at the data.</p>
+<pre><code class="language-python"># Load and display dataset
+df = pd.read_csv(&quot;./data/toronto_apartment_rentals_2020.csv&quot;)
+df
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>street_address</th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+      <th>longitude</th>
+      <th>latitude</th>
+      <th>rental_type</th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>description_text</th>
+      <th>year_built</th>
+      <th>parking_spots</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>334 Gladstone Avenue</td>
+      <td>Toronto</td>
+      <td>M6J 3L6</td>
+      <td>2999.0</td>
+      <td>-79.431071</td>
+      <td>43.652523</td>
+      <td>Accommodation</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>38 Waterbury Drive</td>
+      <td>Etobicoke</td>
+      <td>M9R 3X6</td>
+      <td>1950.0</td>
+      <td>-79.571523</td>
+      <td>43.686387</td>
+      <td>Accommodation</td>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>11 Wellesley Street West</td>
+      <td>Toronto</td>
+      <td>M4Y 1E8</td>
+      <td>1950.0</td>
+      <td>-79.385247</td>
+      <td>43.664503</td>
+      <td>Accommodation</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Candy Factory Loft - Penthouse</td>
+      <td>Toronto</td>
+      <td>M6J 1H2</td>
+      <td>8495.0</td>
+      <td>-79.415616</td>
+      <td>43.644649</td>
+      <td>Accommodation</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>77 Finch Avenue East</td>
+      <td>North York</td>
+      <td>M2N 6H8</td>
+      <td>1200.0</td>
+      <td>-79.411910</td>
+      <td>43.780085</td>
+      <td>Accommodation</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6826</th>
+      <td>38 Elm Street</td>
+      <td>Toronto</td>
+      <td>M5G 2K5</td>
+      <td>2400.0</td>
+      <td>-79.383640</td>
+      <td>43.657599</td>
+      <td>Accommodation</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6827</th>
+      <td>500 Sherbourne Street</td>
+      <td>Toronto</td>
+      <td>M4X 1L1</td>
+      <td>2975.0</td>
+      <td>-79.375682</td>
+      <td>43.667902</td>
+      <td>Accommodation</td>
+      <td>2.0</td>
+      <td>2.0</td>
+      <td>900.0</td>
+      <td>500 SHERBOURNE STREET, SUITE 803\n\nTORONTO - ...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6828</th>
+      <td>159 Gerrard Street East</td>
+      <td>Toronto</td>
+      <td>M5A 2E4</td>
+      <td>3195.0</td>
+      <td>-79.374276</td>
+      <td>43.660670</td>
+      <td>Apartment</td>
+      <td>3.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6829</th>
+      <td>460 Adelaide Street East</td>
+      <td>Toronto</td>
+      <td>M5A 1N6</td>
+      <td>2150.0</td>
+      <td>-79.366487</td>
+      <td>43.652770</td>
+      <td>Accommodation</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6830</th>
+      <td>135 Lambton Avenue</td>
+      <td>York</td>
+      <td>M6N 2S8</td>
+      <td>2500.0</td>
+      <td>-79.491092</td>
+      <td>43.682418</td>
+      <td>Accommodation</td>
+      <td>4.0</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<p>6831 rows × 13 columns</p>
+</div>
+<p>At first sight some columns have a lot of missing values.</p>
+<pre><code class="language-python">df.isna().sum()
+</code></pre>
+<pre><code>street_address         0
+city                   0
+postal_code           21
+price                  0
+longitude              0
+latitude               0
+rental_type            0
+bedrooms             899
+bathrooms           1013
+sqft                5182
+description_text    5192
+year_built          6119
+parking_spots       6119
+dtype: int64
+</code></pre>
+<p>It looks like the last 4 columns are pretty sparse. Since there&rsquo;s so little in the last 3 columns and it&rsquo;s not clear how useful these features would be, for simplicity we will simply drop them. The sqft feature is also rather sparse, but it should have good predictive power and so we&rsquo;ll keep it. We can instead try to infer it from the other features.</p>
+<p>We&rsquo;ll drop the street address column as well, since the location data is already encoded in the postal code and longitude/latitude.</p>
+<p>Let&rsquo;s look at the rental type column.</p>
+<pre><code class="language-python">df.rental_type.value_counts()
+</code></pre>
+<pre><code>Accommodation    5919
+Apartment         912
+Name: rental_type, dtype: int64
+</code></pre>
+<p>Accommodation just seems like a generic term (as opposed to, say, apartment vs condo vs house). We&rsquo;ll drop this column as well since there isn&rsquo;t a clear divide between accommodation and apartment.</p>
+<pre><code class="language-python">df = df.drop(['description_text', 'year_built', 'parking_spots', 'street_address', 'rental_type'], axis=1)
+</code></pre>
+<pre><code class="language-python">df
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+      <th>longitude</th>
+      <th>latitude</th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Toronto</td>
+      <td>M6J 3L6</td>
+      <td>2999.0</td>
+      <td>-79.431071</td>
+      <td>43.652523</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Etobicoke</td>
+      <td>M9R 3X6</td>
+      <td>1950.0</td>
+      <td>-79.571523</td>
+      <td>43.686387</td>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Toronto</td>
+      <td>M4Y 1E8</td>
+      <td>1950.0</td>
+      <td>-79.385247</td>
+      <td>43.664503</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Toronto</td>
+      <td>M6J 1H2</td>
+      <td>8495.0</td>
+      <td>-79.415616</td>
+      <td>43.644649</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>North York</td>
+      <td>M2N 6H8</td>
+      <td>1200.0</td>
+      <td>-79.411910</td>
+      <td>43.780085</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6826</th>
+      <td>Toronto</td>
+      <td>M5G 2K5</td>
+      <td>2400.0</td>
+      <td>-79.383640</td>
+      <td>43.657599</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6827</th>
+      <td>Toronto</td>
+      <td>M4X 1L1</td>
+      <td>2975.0</td>
+      <td>-79.375682</td>
+      <td>43.667902</td>
+      <td>2.0</td>
+      <td>2.0</td>
+      <td>900.0</td>
+    </tr>
+    <tr>
+      <th>6828</th>
+      <td>Toronto</td>
+      <td>M5A 2E4</td>
+      <td>3195.0</td>
+      <td>-79.374276</td>
+      <td>43.660670</td>
+      <td>3.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6829</th>
+      <td>Toronto</td>
+      <td>M5A 1N6</td>
+      <td>2150.0</td>
+      <td>-79.366487</td>
+      <td>43.652770</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6830</th>
+      <td>York</td>
+      <td>M6N 2S8</td>
+      <td>2500.0</td>
+      <td>-79.491092</td>
+      <td>43.682418</td>
+      <td>4.0</td>
+      <td>2.0</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<p>6831 rows × 8 columns</p>
+</div>
+<h4 id="infer-missing-values">Infer missing values</h4>
+<p>A feature like the square footage should carry a lot of importance in determining price. Since we only have ~1700 rows with sqft data, we would like to infer it from the other (non-price) features. First let&rsquo;s take a look at the sqft data itself.</p>
+<pre><code class="language-python">fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.sqft, ax=axes[0])
+sns.kdeplot(df.sqft, ax=axes[1])
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223bb5d5b0&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_16_1.png" alt="png"></p>
+<pre><code class="language-python">df[df.sqft &gt; 100000]
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+      <th>longitude</th>
+      <th>latitude</th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>446</th>
+      <td>Vaughan</td>
+      <td>L4K 1W8</td>
+      <td>2350.0</td>
+      <td>-79.521298</td>
+      <td>43.795942</td>
+      <td>2.0</td>
+      <td>2.0</td>
+      <td>800899.0</td>
+    </tr>
+    <tr>
+      <th>6578</th>
+      <td>Toronto</td>
+      <td>M5J 0B1</td>
+      <td>3000.0</td>
+      <td>-79.382245</td>
+      <td>43.641850</td>
+      <td>2.0</td>
+      <td>2.0</td>
+      <td>700799.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>These seem to be clear errors. The owner probably meant to write a range like 800-899 sqft, so we&rsquo;ll pick the range middle point as value.</p>
+<pre><code class="language-python">df.loc[446, 'sqft'] = 850
+df.loc[6578, 'sqft'] = 750
+</code></pre>
+<pre><code class="language-python">fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.sqft, ax=axes[0])
+sns.kdeplot(df.sqft, ax=axes[1])
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223b4b1640&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_20_1.png" alt="png"></p>
+<pre><code class="language-python">df[df.sqft &gt; 5000]
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+      <th>longitude</th>
+      <th>latitude</th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>990</th>
+      <td>Toronto</td>
+      <td>M6B 2Z1</td>
+      <td>9900.0</td>
+      <td>-79.426037</td>
+      <td>43.705619</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>5900.0</td>
+    </tr>
+    <tr>
+      <th>5451</th>
+      <td>North York</td>
+      <td>M2M 2E4</td>
+      <td>3800.0</td>
+      <td>-79.414209</td>
+      <td>43.787862</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>20000.0</td>
+    </tr>
+    <tr>
+      <th>5829</th>
+      <td>Toronto</td>
+      <td>M5R 2T8</td>
+      <td>2000.0</td>
+      <td>-79.406443</td>
+      <td>43.672597</td>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>6700.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>These datapoints seem more genuine (that&rsquo;s one big house, but it&rsquo;s also in North York).</p>
+<p>We can infer the missing values from the other features using 
+<a href="https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html" target="_blank" rel="noopener">iterative imputing</a>. In short, for each feature with missing data, one can train a regression model on the other features and fill the missing values with the predicted ones.</p>
+<pre><code class="language-python"># Infer missing values
+impute_columns = df[['bedrooms', 'bathrooms', 'sqft', 'latitude', 'longitude']]
+other_columns = df.drop(['bedrooms', 'bathrooms', 'sqft', 'latitude', 'longitude'], axis=1)
+</code></pre>
+<pre><code class="language-python">impute_columns
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>43.652523</td>
+      <td>-79.431071</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>43.686387</td>
+      <td>-79.571523</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>43.664503</td>
+      <td>-79.385247</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>43.644649</td>
+      <td>-79.415616</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>43.780085</td>
+      <td>-79.411910</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6826</th>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>43.657599</td>
+      <td>-79.383640</td>
+    </tr>
+    <tr>
+      <th>6827</th>
+      <td>2.0</td>
+      <td>2.0</td>
+      <td>900.0</td>
+      <td>43.667902</td>
+      <td>-79.375682</td>
+    </tr>
+    <tr>
+      <th>6828</th>
+      <td>3.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>43.660670</td>
+      <td>-79.374276</td>
+    </tr>
+    <tr>
+      <th>6829</th>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>43.652770</td>
+      <td>-79.366487</td>
+    </tr>
+    <tr>
+      <th>6830</th>
+      <td>4.0</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>43.682418</td>
+      <td>-79.491092</td>
+    </tr>
+  </tbody>
+</table>
+<p>6831 rows × 5 columns</p>
+</div>
+<pre><code class="language-python"># Instantiate imputer
+imp = IterativeImputer(max_iter=10, random_state=42, initial_strategy='median')
+
+# Fit imputer on data
+imp.fit(impute_columns)
+
+# Transform impute_columns
+filled_columns = pd.DataFrame(imp.transform(impute_columns), columns=impute_columns.columns)
+</code></pre>
+<pre><code class="language-python">filled_columns
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.643610</td>
+      <td>1.333009</td>
+      <td>809.493593</td>
+      <td>43.652523</td>
+      <td>-79.431071</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.000000</td>
+      <td>1.000000</td>
+      <td>946.382590</td>
+      <td>43.686387</td>
+      <td>-79.571523</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>548.168647</td>
+      <td>43.664503</td>
+      <td>-79.385247</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.617246</td>
+      <td>1.311559</td>
+      <td>791.577622</td>
+      <td>43.644649</td>
+      <td>-79.415616</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1.927558</td>
+      <td>1.525194</td>
+      <td>972.947696</td>
+      <td>43.780085</td>
+      <td>-79.411910</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6826</th>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>545.054086</td>
+      <td>43.657599</td>
+      <td>-79.383640</td>
+    </tr>
+    <tr>
+      <th>6827</th>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>900.000000</td>
+      <td>43.667902</td>
+      <td>-79.375682</td>
+    </tr>
+    <tr>
+      <th>6828</th>
+      <td>3.000000</td>
+      <td>1.000000</td>
+      <td>1237.402968</td>
+      <td>43.660670</td>
+      <td>-79.374276</td>
+    </tr>
+    <tr>
+      <th>6829</th>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>539.186295</td>
+      <td>43.652770</td>
+      <td>-79.366487</td>
+    </tr>
+    <tr>
+      <th>6830</th>
+      <td>4.000000</td>
+      <td>2.000000</td>
+      <td>1716.988502</td>
+      <td>43.682418</td>
+      <td>-79.491092</td>
+    </tr>
+  </tbody>
+</table>
+<p>6831 rows × 5 columns</p>
+</div>
+<p>We should have filled most of our missing data. Let&rsquo;s compare missing values pre and post imputing.</p>
+<pre><code class="language-python"># Missing values pre-imputing
+df.isna().sum()
+</code></pre>
+<pre><code>city              0
+postal_code      21
+price             0
+longitude         0
+latitude          0
+bedrooms        899
+bathrooms      1013
+sqft           5182
+dtype: int64
+</code></pre>
+<pre><code class="language-python"># Merge filled_columns and other_columns back
+df = pd.merge(filled_columns, other_columns, left_index=True, right_index=True)
+</code></pre>
+<pre><code class="language-python"># Missing values post-imputing
+df.isna().sum()
+</code></pre>
+<pre><code>bedrooms        0
+bathrooms       0
+sqft            0
+latitude        0
+longitude       0
+city            0
+postal_code    21
+price           0
+dtype: int64
+</code></pre>
+<pre><code class="language-python">df.shape
+</code></pre>
+<pre><code>(6831, 8)
+</code></pre>
+<h4 id="the-city-and-postal-code-columns">The city and postal code columns</h4>
+<p>Finally we look at these two categorical columns.</p>
+<pre><code class="language-python">df.city.value_counts()
+</code></pre>
+<pre><code>Toronto        4616
+North York      970
+Scarborough     411
+Etobicoke       386
+York            161
+Vaughan         107
+East York        99
+Mississauga      49
+Markham          30
+Brampton          2
+Name: city, dtype: int64
+</code></pre>
+<pre><code class="language-python">df.postal_code.value_counts()
+</code></pre>
+<pre><code>None       57
+M5B 2C2    52
+M5A 1Z4    42
+L4K 2M7    36
+M5A 2Y8    33
+           ..
+M4S 1V5     1
+M6K 2X9     1
+M4B 1K7     1
+M5A 4M8     1
+M5A 1K2     1
+Name: postal_code, Length: 2614, dtype: int64
+</code></pre>
+<p>The postal code column has missing data entered as &lsquo;None&rsquo; on top of the 21 NaN listed above. We can convert them to NaN and, at this point, we will drop all remaining rows with missing data.</p>
+<pre><code class="language-python"># Drop remaining rows with missing values
+df = df.replace('None', np.NaN)
+df = df.dropna()
+</code></pre>
+<pre><code class="language-python">df.shape
+</code></pre>
+<pre><code>(6753, 8)
+</code></pre>
+<p>Finally, the 6 digit postal code seems like it&rsquo;s a bit too granular as we have 2614 distinct entries. We&rsquo;ll extract the first 3 digits of each code to group properties within similar areas.</p>
+<pre><code class="language-python"># Extract first 3 digits of postal_code
+df.postal_code = df.postal_code.apply(lambda x: x[:3])
+</code></pre>
+<pre><code class="language-python">df.postal_code.value_counts()
+</code></pre>
+<pre><code>M5V    1001
+M4Y     456
+M5A     367
+M5J     302
+M2N     299
+       ... 
+m4v       1
+M5Y       1
+A1A       1
+l4X       1
+M3E       1
+Name: postal_code, Length: 115, dtype: int64
+</code></pre>
+<pre><code class="language-python">df
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.643610</td>
+      <td>1.333009</td>
+      <td>809.493593</td>
+      <td>43.652523</td>
+      <td>-79.431071</td>
+      <td>Toronto</td>
+      <td>M6J</td>
+      <td>2999.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.000000</td>
+      <td>1.000000</td>
+      <td>946.382590</td>
+      <td>43.686387</td>
+      <td>-79.571523</td>
+      <td>Etobicoke</td>
+      <td>M9R</td>
+      <td>1950.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>548.168647</td>
+      <td>43.664503</td>
+      <td>-79.385247</td>
+      <td>Toronto</td>
+      <td>M4Y</td>
+      <td>1950.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.617246</td>
+      <td>1.311559</td>
+      <td>791.577622</td>
+      <td>43.644649</td>
+      <td>-79.415616</td>
+      <td>Toronto</td>
+      <td>M6J</td>
+      <td>8495.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1.927558</td>
+      <td>1.525194</td>
+      <td>972.947696</td>
+      <td>43.780085</td>
+      <td>-79.411910</td>
+      <td>North York</td>
+      <td>M2N</td>
+      <td>1200.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6826</th>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>545.054086</td>
+      <td>43.657599</td>
+      <td>-79.383640</td>
+      <td>Toronto</td>
+      <td>M5G</td>
+      <td>2400.0</td>
+    </tr>
+    <tr>
+      <th>6827</th>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>900.000000</td>
+      <td>43.667902</td>
+      <td>-79.375682</td>
+      <td>Toronto</td>
+      <td>M4X</td>
+      <td>2975.0</td>
+    </tr>
+    <tr>
+      <th>6828</th>
+      <td>3.000000</td>
+      <td>1.000000</td>
+      <td>1237.402968</td>
+      <td>43.660670</td>
+      <td>-79.374276</td>
+      <td>Toronto</td>
+      <td>M5A</td>
+      <td>3195.0</td>
+    </tr>
+    <tr>
+      <th>6829</th>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>539.186295</td>
+      <td>43.652770</td>
+      <td>-79.366487</td>
+      <td>Toronto</td>
+      <td>M5A</td>
+      <td>2150.0</td>
+    </tr>
+    <tr>
+      <th>6830</th>
+      <td>4.000000</td>
+      <td>2.000000</td>
+      <td>1716.988502</td>
+      <td>43.682418</td>
+      <td>-79.491092</td>
+      <td>York</td>
+      <td>M6N</td>
+      <td>2500.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>6753 rows × 8 columns</p>
+</div>
+<h3 id="22-visualisations">2.2. Visualisations</h3>
+<h4 id="price-distribution">Price distribution</h4>
+<pre><code class="language-python">fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.price, ax=axes[0])
+sns.kdeplot(df.price, ax=axes[1])
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223b347d90&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_44_1.png" alt="png"></p>
+<p>There are some clear price outliers. Let&rsquo;s fix this by dropping the first and last 5% quantiles of price data.</p>
+<pre><code class="language-python"># drop the first and last 5% quantiles
+df = df[df.price.between(df.price.quantile(0.05), df.price.quantile(0.95))]
+</code></pre>
+<pre><code class="language-python">fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+sns.boxplot(df.price, ax=axes[0])
+sns.kdeplot(df.price, ax=axes[1])
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f223b2f1d00&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_47_1.png" alt="png"></p>
+<pre><code class="language-python">df[df.price &gt;= 3500]
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>15</th>
+      <td>3.000000</td>
+      <td>2.000000</td>
+      <td>1332.060845</td>
+      <td>43.640527</td>
+      <td>-79.397104</td>
+      <td>Toronto</td>
+      <td>M5V</td>
+      <td>3800.0</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>3.000000</td>
+      <td>2.000000</td>
+      <td>1331.951335</td>
+      <td>43.685292</td>
+      <td>-79.319300</td>
+      <td>Toronto</td>
+      <td>M4C</td>
+      <td>3750.0</td>
+    </tr>
+    <tr>
+      <th>43</th>
+      <td>3.000000</td>
+      <td>4.000000</td>
+      <td>1584.904699</td>
+      <td>43.781543</td>
+      <td>-79.405602</td>
+      <td>North York</td>
+      <td>M2N</td>
+      <td>3600.0</td>
+    </tr>
+    <tr>
+      <th>79</th>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>995.672755</td>
+      <td>43.671801</td>
+      <td>-79.387633</td>
+      <td>Toronto</td>
+      <td>M4W</td>
+      <td>3800.0</td>
+    </tr>
+    <tr>
+      <th>117</th>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>989.526746</td>
+      <td>43.655180</td>
+      <td>-79.389638</td>
+      <td>Toronto</td>
+      <td>M5T</td>
+      <td>3500.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6645</th>
+      <td>1.593235</td>
+      <td>1.291247</td>
+      <td>774.670649</td>
+      <td>43.638332</td>
+      <td>-79.397831</td>
+      <td>Toronto</td>
+      <td>M5V</td>
+      <td>3500.0</td>
+    </tr>
+    <tr>
+      <th>6663</th>
+      <td>1.706047</td>
+      <td>1.370630</td>
+      <td>841.911221</td>
+      <td>43.685679</td>
+      <td>-79.404689</td>
+      <td>Toronto</td>
+      <td>M4V</td>
+      <td>3500.0</td>
+    </tr>
+    <tr>
+      <th>6781</th>
+      <td>3.000000</td>
+      <td>2.000000</td>
+      <td>1336.474829</td>
+      <td>43.658836</td>
+      <td>-79.384655</td>
+      <td>Toronto</td>
+      <td>M5G</td>
+      <td>3500.0</td>
+    </tr>
+    <tr>
+      <th>6786</th>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>993.051122</td>
+      <td>43.665517</td>
+      <td>-79.387096</td>
+      <td>Toronto</td>
+      <td>M5S</td>
+      <td>3500.0</td>
+    </tr>
+    <tr>
+      <th>6812</th>
+      <td>2.000000</td>
+      <td>2.000000</td>
+      <td>985.164964</td>
+      <td>43.638521</td>
+      <td>-79.399464</td>
+      <td>Toronto</td>
+      <td>M5V</td>
+      <td>3500.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>197 rows × 8 columns</p>
+</div>
+<pre><code class="language-python">df[df.price &lt;= 1700]
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>city</th>
+      <th>postal_code</th>
+      <th>price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>189</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>800.000000</td>
+      <td>43.663109</td>
+      <td>-79.375154</td>
+      <td>Toronto</td>
+      <td>M5A</td>
+      <td>1659.0</td>
+    </tr>
+    <tr>
+      <th>196</th>
+      <td>2.00000</td>
+      <td>1.000000</td>
+      <td>800.000000</td>
+      <td>43.718479</td>
+      <td>-79.260475</td>
+      <td>Scarborough</td>
+      <td>M1K</td>
+      <td>1600.0</td>
+    </tr>
+    <tr>
+      <th>208</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>594.808222</td>
+      <td>43.764094</td>
+      <td>-79.415858</td>
+      <td>North York</td>
+      <td>M2N</td>
+      <td>1650.0</td>
+    </tr>
+    <tr>
+      <th>215</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>560.000000</td>
+      <td>43.614332</td>
+      <td>-79.487306</td>
+      <td>Etobicoke</td>
+      <td>M8V</td>
+      <td>1700.0</td>
+    </tr>
+    <tr>
+      <th>218</th>
+      <td>1.63832</td>
+      <td>1.317654</td>
+      <td>797.502978</td>
+      <td>43.663109</td>
+      <td>-79.375154</td>
+      <td>Toronto</td>
+      <td>M5A</td>
+      <td>1659.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6480</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>550.000000</td>
+      <td>43.669195</td>
+      <td>-79.452815</td>
+      <td>Toronto</td>
+      <td>M6N</td>
+      <td>1600.0</td>
+    </tr>
+    <tr>
+      <th>6484</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>600.000000</td>
+      <td>43.609696</td>
+      <td>-79.592960</td>
+      <td>Mississauga</td>
+      <td>L4Y</td>
+      <td>1699.0</td>
+    </tr>
+    <tr>
+      <th>6521</th>
+      <td>2.00000</td>
+      <td>1.000000</td>
+      <td>920.770784</td>
+      <td>43.794746</td>
+      <td>-79.273062</td>
+      <td>Scarborough</td>
+      <td>M1S</td>
+      <td>1650.0</td>
+    </tr>
+    <tr>
+      <th>6561</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>589.380038</td>
+      <td>43.786449</td>
+      <td>-79.353657</td>
+      <td>North York</td>
+      <td>M2J</td>
+      <td>1600.0</td>
+    </tr>
+    <tr>
+      <th>6630</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>550.865882</td>
+      <td>43.601470</td>
+      <td>-79.505850</td>
+      <td>Etobicoke</td>
+      <td>M8V</td>
+      <td>1650.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>221 rows × 8 columns</p>
+</div>
+<pre><code class="language-python">np.mean(df.price)
+</code></pre>
+<pre><code>2353.290710915894
+</code></pre>
+<pre><code class="language-python">np.std(df.price)
+</code></pre>
+<pre><code>474.7314238176986
+</code></pre>
+<pre><code class="language-python">df.shape
+</code></pre>
+<pre><code>(6147, 8)
+</code></pre>
+<h4 id="location-distribution">Location distribution</h4>
+<p>Since we have the Latitude/Longitude data, we can see where our datapoints are situated. We can use 
+<a href="https://geopandas.org/" target="_blank" rel="noopener">geopandas</a> to overlay a scatterplot onto a plot of Toronto, or of the Greater Toronto Area.</p>
+<pre><code class="language-python">toronto_map = gpd.read_file(&quot;./data/shapefiles/toronto/CENTRELINE_WGS84.shp&quot;)
+gta_map = gpd.read_file(&quot;./data/shapefiles/gta/GTA2013_Index.shp&quot;)
+</code></pre>
+<p>Let&rsquo;s look at where our data is situated within the GTA.</p>
+<pre><code class="language-python">fig, ax = plt.subplots(figsize=(15, 15))
+
+gta_map.plot(ax=ax, alpha=0.3, color='grey')
+sns.scatterplot(df.longitude, df.latitude, ax=ax, hue=df.price, palette='RdYlGn_r')
+ax.set_title('Distribution of rent prices data across the Greater Toronto Area')
+ax.set_xlabel('Longitude')
+ax.set_ylabel('Latitude')
+</code></pre>
+<pre><code>Text(109.3490879304675, 0.5, 'Latitude')
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_56_1.png" alt="png"></p>
+<p>Now let&rsquo;s look at Toronto proper.</p>
+<pre><code class="language-python">fig, ax = plt.subplots(figsize=(15, 15))
+
+toronto_map.plot(ax=ax, alpha=0.2, color='grey')
+sns.scatterplot(df.longitude, df.latitude, ax=ax, hue=df.price, palette='RdYlGn_r')
+ax.set_title('Distribution of rent prices data across Toronto')
+ax.set_xlabel('Longitude')
+ax.set_ylabel('Latitude')
+</code></pre>
+<pre><code>Text(95.5, 0.5, 'Latitude')
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_58_1.png" alt="png"></p>
+<p>There are some clear concentrations of high rent places around downtown Toronto and the North York area, while rent seems to get cheaper as you go further west/east of Toronto.</p>
+<p>Next, let&rsquo;s look at the distribution of postal codes.</p>
+<pre><code class="language-python">postal_codes = df.postal_code.value_counts()
+
+fig, ax = plt.subplots(figsize=(20, 20))
+sns.barplot(x=postal_codes, y=postal_codes.index)
+ax.set_xlabel('Postal code frequency')
+</code></pre>
+<pre><code>Text(0.5, 0, 'Postal code frequency')
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_60_1.png" alt="png"></p>
+<p>Looking up these postal codes, we again see that the data seems heavily concentrated downtown and in North York. Let&rsquo;s look at the  6 most frequent postal codes:</p>
+<ul>
+<li>
+<a href="https://www.google.com/maps/place/Toronto,&#43;ON&#43;M5V/@43.6314062,-79.4116401,14z/data=!3m1!4b1!4m5!3m4!1s0x882b35252b71ef0d:0xee11d2dff47e9a1!8m2!3d43.6289467!4d-79.3944199" target="_blank" rel="noopener">M5V</a> : Fashion/Entertainment District &amp; Toronto Islands</li>
+<li>
+<a href="https://www.google.com/maps/place/Toronto,&#43;ON&#43;M4Y/@43.6666517,-79.3903063,15z/data=!3m1!4b1!4m5!3m4!1s0x882b34b2c1714f89:0xd093238d56b31c9c!8m2!3d43.6658599!4d-79.3831599" target="_blank" rel="noopener">M4Y</a> : Church &amp; Wellesley Area</li>
+<li>
+<a href="https://www.google.com/maps/place/Toronto,&#43;ON&#43;M5A/@43.6499487,-79.3878643,13z/data=!3m1!4b1!4m5!3m4!1s0x89d4cb16c81cbaa7:0x33cea1547f0c5278!8m2!3d43.6542599!4d-79.3606359" target="_blank" rel="noopener">M5A</a> : Corktown &amp; Cabbagetown South Area</li>
+<li>
+<a href="https://www.google.com/maps/place/North&#43;York,&#43;ON&#43;M2N/@43.7681432,-79.448698,13z/data=!3m1!4b1!4m5!3m4!1s0x882b2d6fd314b9eb:0x2f13d8da0be397e4!8m2!3d43.7701199!4d-79.4084928" target="_blank" rel="noopener">M2N</a> : North York - Willowdale Area</li>
+<li>
+<a href="https://www.google.com/maps/place/Toronto,&#43;ON&#43;M5J/@43.6297434,-79.4014638,13z/data=!4m5!3m4!1s0x89d4cada7048225d:0x8ff689c9a9de81d0!8m2!3d43.6408157!4d-79.3817523" target="_blank" rel="noopener">M5J</a> : Waterfront &amp; Toronto Islands</li>
+<li>
+<a href="https://www.google.com/maps/place/Toronto,&#43;ON&#43;M5B/@43.6530176,-79.3988573,14.1z/data=!4m5!3m4!1s0x89d4cb356600009f:0x5815e4db84791f34!8m2!3d43.6571618!4d-79.3789371" target="_blank" rel="noopener">M5B</a> : Ryerson University Area</li>
+</ul>
+<p>Next, let&rsquo;s look at the longtitude/latitude distributions.</p>
+<pre><code class="language-python">fig, axes = plt.subplots(1, 2, figsize=(15,5))
+
+sns.boxplot(df.longitude, ax=axes[0])
+sns.kdeplot(df.longitude, ax=axes[1])
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f222209b6d0&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_62_1.png" alt="png"></p>
+<pre><code class="language-python">fig, axes = plt.subplots(1, 2, figsize=(15,5))
+
+sns.boxplot(df.latitude, ax=axes[0])
+sns.kdeplot(df.latitude, ax=axes[1])
+</code></pre>
+<pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f222207b3d0&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_63_1.png" alt="png"></p>
+<p>It&rsquo;s clear our data is concentrated in a vertical corridor centered on downtown. We also see small bumps in the Yonge/Eglinton and North York areas on the latitude plots.</p>
+<h4 id="features-scatter-matrix">Features scatter matrix</h4>
+<pre><code class="language-python">sns.pairplot(df.sample(500), hue='price', diag_kind='hist', palette='RdYlGn_r')
+</code></pre>
+<pre><code>&lt;seaborn.axisgrid.PairGrid at 0x7f22220f4640&gt;
+</code></pre>
+<p><img src="/img/posts/rent-prices-toronto/Rent-Prices-Toronto_66_1.png" alt="png"></p>
+<h3 id="23-onehotencode">2.3. OneHotEncode</h3>
+<p>Finally we encode categorical features (city, postal code) as 0/1 variables.</p>
+<pre><code class="language-python"># Split categorical from numerical data
+df_categorical = df.select_dtypes(include=[object])
+df_numerical = df.drop(columns=df_categorical.columns, axis=1)
+    
+# Fit one-hot encoder on categorical data
+onehot = OneHotEncoder(handle_unknown='ignore')
+onehot.fit(df_categorical)
+
+# Transform categorical data
+df_onehot = pd.DataFrame(onehot.transform(df_categorical).toarray(), 
+                         columns=onehot.get_feature_names(),
+                         index=df_categorical.index)
+
+# Merge data
+df = pd.merge(df_numerical, df_onehot, left_index=True, right_index=True)
+
+# Display
+df
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>price</th>
+      <th>x0_Brampton</th>
+      <th>x0_East York</th>
+      <th>x0_Etobicoke</th>
+      <th>x0_Markham</th>
+      <th>...</th>
+      <th>x1_M9M</th>
+      <th>x1_M9N</th>
+      <th>x1_M9P</th>
+      <th>x1_M9R</th>
+      <th>x1_M9V</th>
+      <th>x1_M9W</th>
+      <th>x1_l4X</th>
+      <th>x1_m4g</th>
+      <th>x1_m4v</th>
+      <th>x1_m6h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.64361</td>
+      <td>1.333009</td>
+      <td>809.493593</td>
+      <td>43.652523</td>
+      <td>-79.431071</td>
+      <td>2999.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.00000</td>
+      <td>1.000000</td>
+      <td>946.382590</td>
+      <td>43.686387</td>
+      <td>-79.571523</td>
+      <td>1950.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>548.168647</td>
+      <td>43.664503</td>
+      <td>-79.385247</td>
+      <td>1950.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.00000</td>
+      <td>1.000000</td>
+      <td>894.076951</td>
+      <td>43.661927</td>
+      <td>-79.386511</td>
+      <td>2500.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>3.00000</td>
+      <td>1.000000</td>
+      <td>1275.463512</td>
+      <td>43.717287</td>
+      <td>-79.441846</td>
+      <td>2450.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6826</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>545.054086</td>
+      <td>43.657599</td>
+      <td>-79.383640</td>
+      <td>2400.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6827</th>
+      <td>2.00000</td>
+      <td>2.000000</td>
+      <td>900.000000</td>
+      <td>43.667902</td>
+      <td>-79.375682</td>
+      <td>2975.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6828</th>
+      <td>3.00000</td>
+      <td>1.000000</td>
+      <td>1237.402968</td>
+      <td>43.660670</td>
+      <td>-79.374276</td>
+      <td>3195.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6829</th>
+      <td>1.00000</td>
+      <td>1.000000</td>
+      <td>539.186295</td>
+      <td>43.652770</td>
+      <td>-79.366487</td>
+      <td>2150.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6830</th>
+      <td>4.00000</td>
+      <td>2.000000</td>
+      <td>1716.988502</td>
+      <td>43.682418</td>
+      <td>-79.491092</td>
+      <td>2500.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>6147 rows × 130 columns</p>
+</div>
+<h3 id="24-store-clean-dataset">2.4. Store clean dataset</h3>
+<pre><code class="language-python">df.to_csv(&quot;./data/toronto_apartment_rentals_2020_clean.csv&quot;, index=False)
+</code></pre>
+<h2 id="3-model-selection">3. Model selection</h2>
+<p>We now try to predict the price based on the remaining features.</p>
+<pre><code class="language-python"># Load clean dataset
+df = pd.read_csv(&quot;./data/toronto_apartment_rentals_2020_clean.csv&quot;)
+</code></pre>
+<pre><code class="language-python"># Split into labels and features
+y = df.price
+X = df.drop('price', axis=1)
+</code></pre>
+<h3 id="31-algorithms-comparison">3.1. Algorithms comparison</h3>
+<p>We&rsquo;ll try out Lasso Regression, K-Nearest Neighbors Regression and XGBoost (a.k.a. Extreme Gradient Boosting Machines). For each model, we&rsquo;ll use RandomizedSearchCV to tune their parameters and then pick the best one.</p>
+<pre><code class="language-python"># Collecting models and their parameter grids to optimise over.
+
+models = {
+    'lasso': {
+        'name': 'Lasso Regression',
+        'model': Lasso,
+        'param_grid': {
+            'alpha': [0.1, 1, 10],
+            'normalize': [True, False]
+        }
+    },
+    
+    'knn': {
+        'name': 'K-Nearest Neighbors',
+        'model': KNeighborsRegressor,
+        'param_grid': {
+            'n_neighbors': list(range(1, 21)),
+            'p': [1, 2, 3]
+        }
+    },
+    
+    'xgb': {
+        'name': 'XGBoost',
+        'model': XGBRegressor,
+        'param_grid': {
+            &quot;colsample_bytree&quot;: uniform(0.7, 0.3),
+            &quot;gamma&quot;: uniform(0, 0.5),
+            &quot;learning_rate&quot;: uniform(0.03, 0.3), 
+            &quot;max_depth&quot;: randint(2, 6), 
+            &quot;n_estimators&quot;: randint(100, 400), 
+            &quot;subsample&quot;: uniform(0.6, 0.4),
+            &quot;objective&quot;: [&quot;reg:squarederror&quot;],
+            &quot;random_state&quot;: [42]
+        } 
+    }
+}
+</code></pre>
+<p>To train and compare models, we&rsquo;ll use the helper function below.</p>
+<pre><code class="language-python">def train_and_pick_best_model(models, features, labels, n_iter=10, verbose=False):
+    &quot;&quot;&quot;Train and tune a collection of models via RandomizedSearchCV and return 
+    the best one, fitted on a training set.
+    
+    Args:
+        models (dict): a dictionary of models containing model name, class constructor and params grid.
+        features (dataframe): features to train models.
+        labels (series): labels to predict.
+        n_iter (int): number of iterations for RandomizedSearchCV, 
+                      increase for gain of accuracy vs loss of training speed.
+        verbose (bool): Set to true to print model info as they are trained/evaluated.
+        
+    Returns:
+        fitted model trained with best RandomizedSearchCV params.
+    &quot;&quot;&quot;
+    
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.1, random_state=42)
+
+    # Keep record of best model found
+    best_model = {
+        'fitted_instance': None,
+        'R2_train_score': None,
+        'R2_test_score': None,
+        'RMSE_train_score': None,
+        'RMSE_test_score': None,
+        'name': None,
+        'params': None
+    }
+    
+    for m in models:
+        # Train and tune model via RandomizedSearchCV
+        model = models[m]['model']()
+        param_grid = models[m]['param_grid']
+        reg = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=n_iter, random_state=42)
+        reg.fit(X_train, y_train)
+
+        # Collect model info/scores
+        R2_train_score = reg.score(X_train, y_train)
+        R2_test_score = reg.score(X_test, y_test)
+        RMSE_train_score = mean_squared_error(y_train, reg.predict(X_train), squared=False)
+        RMSE_test_score = mean_squared_error(y_test, reg.predict(X_test), squared=False)
+        best_params = reg.best_params_
+        
+        # Print model information
+        if verbose:
+            print(&quot;-&quot;*115)
+            print(&quot;Model: {}&quot;.format(models[m]['name']))
+            print(&quot;R^2 train score:  {:.3f}&quot;.format(R2_train_score))
+            print(&quot;R^2 test score:   {:.3f}&quot;.format(R2_test_score))
+            print(&quot;RMSE train score: {:.2f}&quot;.format(RMSE_train_score))
+            print(&quot;RMSE test score:  {:.2f}&quot;.format(RMSE_test_score))
+            print(&quot;Best params: {}&quot;.format(best_params))
+        
+        # Update best model found so far
+        if not best_model['fitted_instance'] or R2_test_score &gt; best_model['R2_test_score']:
+            best_model.update({
+                'fitted_instance': reg,
+                'R2_train_score': R2_train_score,
+                'R2_test_score': R2_test_score,
+                'RMSE_train_score': RMSE_train_score, 
+                'RMSE_test_score': RMSE_test_score,
+                'params': best_params,
+                'name': models[m]['name']
+            })
+
+    # Print best model info
+    if verbose:
+        print(&quot;=&quot;*115)
+        print(&quot;Best model: {}&quot;.format(best_model['name']))
+        print(&quot;R^2 train score:  {:.3f}&quot;.format(best_model['R2_train_score']))
+        print(&quot;R^2 test score:   {:.3f}&quot;.format(best_model['R2_test_score']))
+        print(&quot;RMSE train score: {:.2f}&quot;.format(best_model['RMSE_train_score']))
+        print(&quot;RMSE test score:  {:.2f}&quot;.format(best_model['RMSE_test_score']))
+        print(&quot;Params: {}&quot;.format(best_model['params']))
+    
+    return best_model['fitted_instance']
+</code></pre>
+<pre><code class="language-python"># This should take about a minute
+reg = train_and_pick_best_model(models=models, features=X, labels=y, n_iter = 20, verbose=True)
+</code></pre>
+<pre><code>-------------------------------------------------------------------------------------------------------------------
+Model: Lasso Regression
+R^2 train score:  0.591
+R^2 test score:   0.619
+RMSE train score: 302.49
+RMSE test score:  302.14
+Best params: {'normalize': False, 'alpha': 0.1}
+-------------------------------------------------------------------------------------------------------------------
+Model: K-Nearest Neighbors
+R^2 train score:  0.700
+R^2 test score:   0.619
+RMSE train score: 258.98
+RMSE test score:  302.06
+Best params: {'p': 1, 'n_neighbors': 5}
+-------------------------------------------------------------------------------------------------------------------
+Model: XGBoost
+R^2 train score:  0.772
+R^2 test score:   0.714
+RMSE train score: 225.65
+RMSE test score:  262.02
+Best params: {'colsample_bytree': 0.7121300768615294, 'gamma': 0.3553314448428937, 'learning_rate': 0.0632672462435494, 'max_depth': 5, 'n_estimators': 278, 'objective': 'reg:squarederror', 'random_state': 42, 'subsample': 0.6125716742746937}
+===================================================================================================================
+Best model: XGBoost
+R^2 train score:  0.772
+R^2 test score:   0.714
+RMSE train score: 225.65
+RMSE test score:  262.02
+Params: {'colsample_bytree': 0.7121300768615294, 'gamma': 0.3553314448428937, 'learning_rate': 0.0632672462435494, 'max_depth': 5, 'n_estimators': 278, 'objective': 'reg:squarederror', 'random_state': 42, 'subsample': 0.6125716742746937}
+</code></pre>
+<h3 id="32-make-a-prediction-based-on-user-input">3.2. Make a prediction based on user input</h3>
+<p>At this point we have a trained regression model, and we want to use it to make predictions. We&rsquo;ll want to accept user input in the original format for our data, and then transform it using the original Imputer and OneHotEncoder which we used to transform our data.</p>
+<pre><code class="language-python">user_input = {
+    'bedrooms': 1.0,
+    'bathrooms': 1.0,
+    'sqft': 950,
+    'latitude': np.NaN,
+    'longitude': np.NaN,
+    'city': &quot;Toronto&quot;,
+    'postal_code': &quot;M6R&quot;, 
+}
+</code></pre>
+<pre><code class="language-python">def transform_user_input(input_dict):
+    &quot;&quot;&quot;Prepare user input for prediction using Imputer and OneHotEncoder transformers.&quot;&quot;&quot;
+    
+    columns = ['bedrooms', 'bathrooms', 'sqft','latitude','longitude','city','postal_code']
+    df = pd.DataFrame(input_dict, columns=columns, index=[0])
+    
+    # Split into categorical and numerical columns
+    df_numerical = df[['bedrooms', 'bathrooms', 'sqft', 'latitude', 'longitude']]    
+    df_categorical = df[['city', 'postal_code']]
+    
+    # Impute missing values in the numerical columns
+    # These are: bedrooms, bathrooms, sqft, latitude, longitude
+    df_impute = pd.DataFrame(imp.transform(df_numerical), 
+                             columns=df_numerical.columns)
+    
+    # Onehot encode categorical values
+    df_onehot = pd.DataFrame(onehot.transform(df_categorical).toarray(), 
+                             columns=onehot.get_feature_names())
+
+    # Return merged dataframe
+    return pd.merge(df_impute, df_onehot, left_index=True, right_index=True)
+</code></pre>
+<pre><code class="language-python">user_input = transform_user_input(user_input)
+user_input
+</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>bedrooms</th>
+      <th>bathrooms</th>
+      <th>sqft</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>x0_Brampton</th>
+      <th>x0_East York</th>
+      <th>x0_Etobicoke</th>
+      <th>x0_Markham</th>
+      <th>x0_Mississauga</th>
+      <th>...</th>
+      <th>x1_M9M</th>
+      <th>x1_M9N</th>
+      <th>x1_M9P</th>
+      <th>x1_M9R</th>
+      <th>x1_M9V</th>
+      <th>x1_M9W</th>
+      <th>x1_l4X</th>
+      <th>x1_m4g</th>
+      <th>x1_m4v</th>
+      <th>x1_m6h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>950.0</td>
+      <td>43.679707</td>
+      <td>-79.399019</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 129 columns</p>
+</div>
+<p>At this point we can make a prediction.</p>
+<pre><code class="language-python">reg.predict(user_input)
+</code></pre>
+<pre><code>array([2141.0542], dtype=float32)
+</code></pre>
+<h4 id="handle-new-categorical-inputs">Handle new categorical inputs</h4>
+<p>When initiating our OneHotEncoder, we set it to ignore unknown categorical values. This means the transformer sets them to 0, and our model can make a prediction from there (although not being aided by the additional data in that feature).</p>
+<pre><code class="language-python">new_input = {
+    'bedrooms': 1.0,
+    'bathrooms': 1.0,
+    'sqft': np.NaN,
+    'latitude': np.NaN,
+    'longitude': np.NaN,
+    'city': &quot;New York&quot;,
+    'postal_code': &quot;BABASTART&quot;, 
+}
+
+reg.predict(transform_user_input(new_input))
+</code></pre>
+<pre><code>array([2074.4036], dtype=float32)
+</code></pre>
+<h2 id="4-model-deployment">4. Model deployment</h2>
+<h3 id="41-save-our-model-and-transformers">4.1. Save our model and transformers</h3>
+<pre><code class="language-python">joblib.dump(reg, &quot;./model/model.pkl&quot;)
+joblib.dump(imp, &quot;./model/imp.pkl&quot;)
+joblib.dump(onehot, &quot;./model/onehot.pkl&quot;)
+</code></pre>
+<pre><code>['./model/onehot.pkl']
+</code></pre>
+<h3 id="42-deploy-to-heroku">4.2. Deploy to Heroku</h3>
+<p>At this point we can deploy our model. See <a href="https://predict-toronto-rent.herokuapp.com/">https://predict-toronto-rent.herokuapp.com/</a> for a live version on the Heroku platform!</p>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  </div>
+</article>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = true;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    
+  </p>
+
+  
+  
+
+
+
+
+
+
+  <p class="powered-by">
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
