@@ -26,7 +26,7 @@
 &lt;/ol&gt;
 &lt;p&gt;&lt;img src=&#34;https://vgelinas.github.io/img/posts/rent-prices-toronto/Rent-Prices-Toronto_58_1.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
 &lt;p&gt;See the 
-&lt;a href=&#34;https://github.com/vgelinas/data-projects/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Github&lt;/a&gt; repository for this project&amp;rsquo;s notebook, datasets and additional scripts.&lt;/p&gt;
+&lt;a href=&#34;https://github.com/vgelinas/data-projects/tree/master/Rent-Prices-Toronto&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Github&lt;/a&gt; repository for this project&amp;rsquo;s notebook, datasets and additional scripts.&lt;/p&gt;
 &lt;h4 id=&#34;required-libraries&#34;&gt;Required libraries&lt;/h4&gt;
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;# General libraries
 import pandas as pd
